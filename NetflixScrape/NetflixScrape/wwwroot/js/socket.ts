@@ -1,5 +1,5 @@
 ﻿namespace SocketDemo {
-    const socketUrl = `ws://${location.host}/ws`;
+    const socketUrl = `ws://${location.host}/ws-source`;
 
     function openSocket(listener: EventListenerOrEventListenerObject) {
         var socket = new WebSocket(socketUrl);
