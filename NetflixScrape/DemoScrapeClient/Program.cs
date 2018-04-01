@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NetflixScrape.Websockets;
+using System;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
@@ -18,23 +19,16 @@ namespace DemoScrapeClient
                 using (var socket = new ClientWebSocket())
                 {
                     await socket.ConnectAsync(new Uri($"ws://localhost:{port}/ws"), CancellationToken.None);
-                    var buffer = new byte[4096];
-                    for (string input = "hi"; input != "q"; input = Console.ReadLine())
+                    using (var messenger = new WebsocketMessenger(socket))
                     {
-                        var utf8Length = Encoding.UTF8.GetBytes(input, 0, input.Length, buffer, 0);
-                        var segment = new ArraySegment<byte>(buffer, 0, utf8Length);
-                        await socket.SendAsync(segment, WebSocketMessageType.Text, false, CancellationToken.None);
+                        messenger.MessageReceived += Messenger_MessageReceived;
 
-                        var response = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                        Console.WriteLine($"Received {Encoding.UTF8.GetString(buffer, 0, response.Count)}");
+                        string nextLine;
+                        while (!String.IsNullOrEmpty(nextLine = Console.ReadLine()))
+                        {
+                            await messenger.SendAsync(nextLine);
+                        }
                     }
-                }
-
-                using (var client = new HttpClient() { BaseAddress = new Uri($"http://localhost:{port}") })
-                {
-                    var response = await client.GetAsync("api/values");
-                    var data = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine(data);
                 }
             }
             else
@@ -42,6 +36,11 @@ namespace DemoScrapeClient
                 Console.WriteLine($"{portEntry} is not an integer. Better luck next time");
             }
             ;
+        }
+
+        private static void Messenger_MessageReceived(object sender, WebsocketReceiveEventArgs e)
+        {
+            Console.WriteLine("Received: {0}", e.Message);
         }
     }
 }

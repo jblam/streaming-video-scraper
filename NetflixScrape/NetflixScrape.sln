@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetflixScrape", "NetflixScrape\NetflixScrape.csproj", "{86AC8CC6-1069-4300-B3B8-A76E7B0A1592}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetflixScrape", "NetflixScrape\NetflixScrape.csproj", "{86AC8CC6-1069-4300-B3B8-A76E7B0A1592}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoScrapeClient", "DemoScrapeClient\DemoScrapeClient.csproj", "{6BE49665-F1C6-456F-9711-FADE2EE19844}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemoScrapeClient", "DemoScrapeClient\DemoScrapeClient.csproj", "{6BE49665-F1C6-456F-9711-FADE2EE19844}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetflixScrape.Websockets", "NetflixScrape.Websockets\NetflixScrape.Websockets.csproj", "{F5E20203-EE68-49C4-970E-B3DCEF7BEF7B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{6BE49665-F1C6-456F-9711-FADE2EE19844}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6BE49665-F1C6-456F-9711-FADE2EE19844}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6BE49665-F1C6-456F-9711-FADE2EE19844}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5E20203-EE68-49C4-970E-B3DCEF7BEF7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5E20203-EE68-49C4-970E-B3DCEF7BEF7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5E20203-EE68-49C4-970E-B3DCEF7BEF7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5E20203-EE68-49C4-970E-B3DCEF7BEF7B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

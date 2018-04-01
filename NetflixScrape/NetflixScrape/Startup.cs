@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NetflixScrape.Websockets;
 
 namespace NetflixScrape
 {
@@ -54,18 +55,25 @@ namespace NetflixScrape
                         var webSocket = await context.WebSockets.AcceptWebSocketAsync();
                         if (isSource)
                         {
-                            if (source?.CloseStatus != null)
+                            if (source?.IsDisposed == false)
                             {
-                                await source.CloseAsync(WebSocketCloseStatus.EndpointUnavailable, "Another source registered", CancellationToken.None);
+                                await source.FinishAsync();
                             }
-                            source = webSocket;
-                            await DoSourceAsync(context, webSocket);
+                            source = new WebsocketMessenger(webSocket);
+                            source.MessageReceived += Source_MessageReceived;
+                            await source.ReceiveTask;
                         }
                         if (isClient)
                         {
-                            clients.Add(webSocket);
+                            using (var client = new WebsocketMessenger(webSocket))
+                            {
+                                client.MessageReceived += Client_MessageReceived;
+                                clients.Add(client);
+                                await client.ReceiveTask;
+                                clients.Remove(client);
+                            }
+
                         }
-                        await Echo(context, webSocket);
                     }
                     else
                     {
@@ -80,37 +88,17 @@ namespace NetflixScrape
             });
         }
 
-        WebSocket source;
-        ISet<WebSocket> clients = new HashSet<WebSocket>();
-
-        static ArraySegment<byte> sourceClosingMessage = new ArraySegment<byte>(Encoding.UTF8.GetBytes("Source closing"));
-
-        async Task DoSourceAsync(HttpContext context, WebSocket sourceSocket)
+        private async void Source_MessageReceived(object sender, WebsocketReceiveEventArgs e)
         {
-            var buffer = new byte[1024 * 4];
-            var result = await sourceSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            while (!result.CloseStatus.HasValue)
-            {
-                var message = new ArraySegment<byte>(buffer, 0, result.Count);
-                await Task.WhenAll(clients.Select(s => s.SendAsync(message, result.MessageType, result.EndOfMessage, CancellationToken.None)));
-
-                result = await sourceSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            }
-            await Task.WhenAll(clients.Select(s => s.SendAsync(sourceClosingMessage, WebSocketMessageType.Text, true, CancellationToken.None)));
-            await sourceSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+            await Task.WhenAll(clients.Select(c => c.SendAsync(e.Message)));
         }
 
-        private static async Task Echo(HttpContext context, WebSocket webSocket)
+        private async void Client_MessageReceived(object sender, WebsocketReceiveEventArgs e)
         {
-            var buffer = new byte[1024 * 4];
-            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            while (!result.CloseStatus.HasValue)
-            {
-                await webSocket.SendAsync(new ArraySegment<byte>(buffer, 0, result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None);
-
-                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            }
-            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+            await source.SendAsync(e.Message);
         }
+
+        WebsocketMessenger source;
+        ISet<WebsocketMessenger> clients = new HashSet<WebsocketMessenger>();
     }
 }

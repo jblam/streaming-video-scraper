@@ -19,6 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NetflixScrape.Websockets\NetflixScrape.Websockets.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <TypeScriptCompile Include="wwwroot\js\socket.ts" />
   </ItemGroup>
 
