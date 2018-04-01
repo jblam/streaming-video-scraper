@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NetflixScrape.Websockets
+namespace JBlam.NetflixScrape.Core
 {
     public class WebsocketMessenger : IDisposable
     {

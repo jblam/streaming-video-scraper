@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <TypeScriptToolsVersion>2.5</TypeScriptToolsVersion>
+    <AssemblyName>NetflixScrape.Server</AssemblyName>
+    <RootNamespace>JBlam.NetflixScrape.Server</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NetflixScrape.Websockets\NetflixScrape.Websockets.csproj" />
+    <ProjectReference Include="..\NetflixScrape.Websockets\NetflixScrape.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿using NetflixScrape.Websockets;
+﻿using JBlam.NetflixScrape.Core;
 using System;
 using System.Net.Http;
 using System.Net.WebSockets;

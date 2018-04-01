@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>JBlam.NetflixScrape.Core</AssemblyName>
+    <RootNamespace>JBlam.NetflixScrape.Core</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

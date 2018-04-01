@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace NetflixScrape.Websockets
+namespace JBlam.NetflixScrape.Core
 {
 
     public class WebsocketReceiveEventArgs : EventArgs

@@ -4,6 +4,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <LangVersion>7.1</LangVersion>
+    <AssemblyName>JBlam.NetflixScrape.DemoScrapeClient</AssemblyName>
+    <RootNamespace>JBlam.NetflixScrape.DemoScrapeClient</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NetflixScrape.Websockets\NetflixScrape.Websockets.csproj" />
+    <ProjectReference Include="..\NetflixScrape.Websockets\NetflixScrape.Core.csproj" />
   </ItemGroup>
 
 </Project>
