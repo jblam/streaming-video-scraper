@@ -4,7 +4,7 @@ Scraping the UI and interacting with it via script.
 
 ## Profile Select
 
-Choose between actual users, "kids", or "new profile"
+Choose between actual users, "kids", or "new profile". Url: `/browse`
 
 ```
 function isProfileSelectRequired()

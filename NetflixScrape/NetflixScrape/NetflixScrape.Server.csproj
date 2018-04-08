@@ -8,7 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="wwwroot\js\socket.ts" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,7 +33,6 @@
     <TypeScriptCompile Include="Extension\background-script.ts" />
     <TypeScriptCompile Include="Extension\content-script.ts" />
     <TypeScriptCompile Include="Extension\webextensions.d.ts" />
-    <TypeScriptCompile Include="wwwroot\js\socket.ts" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties Extension_4manifest_1json__JSONSchema="http://json.schemastore.org/webextension" /></VisualStudio></ProjectExtensions>
@@ -44,7 +42,7 @@
     <TypeScriptJSXEmit>None</TypeScriptJSXEmit>
     <TypeScriptModuleKind>ES6</TypeScriptModuleKind>
     <TypeScriptCompileOnSaveEnabled>True</TypeScriptCompileOnSaveEnabled>
-    <TypeScriptNoImplicitAny>False</TypeScriptNoImplicitAny>
+    <TypeScriptNoImplicitAny>True</TypeScriptNoImplicitAny>
     <TypeScriptRemoveComments>False</TypeScriptRemoveComments>
     <TypeScriptOutFile />
     <TypeScriptOutDir />

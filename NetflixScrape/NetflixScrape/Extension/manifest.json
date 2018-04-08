@@ -16,7 +16,6 @@
   "permissions": [
     "*://*.netflix.com/*",
     "*://localhost/*",
-    "history",
     "webNavigation"
   ]
 }

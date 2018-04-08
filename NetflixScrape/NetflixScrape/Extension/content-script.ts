@@ -13,15 +13,21 @@
     feedbackElement.textContent = "Hi, this is a script";
     console.log("This is a script");
 
-    browser.runtime.onMessage.addListener(message => {
-        console.log("received message:", message);
-        feedbackElement.textContent = message;
-    });
-
-    browser.runtime.sendMessage(`page loaded: ${location}`);
-
-    window.addEventListener('hashchange', async evt => {
-        await browser.runtime.sendMessage(`hash changed: ${evt.newURL}`);
-        console.log("sent hashchange", evt);
-    })
+    try {
+        const port = browser.runtime.connect();
+        console.log("created port");
+        port.postMessage({ event: 'loaded' });
+        port.onMessage.addListener(message => {
+            console.log("received message:");
+            feedbackElement.textContent = 'message';
+        });
+        window.addEventListener('hashchange', async evt => {
+            port.postMessage({ event: 'hash changed', url: evt.newURL });
+            console.log("sent hashchange", evt);
+        });
+    }
+    catch (e) {
+        console.error(e);
+        debugger;
+    }
 }
