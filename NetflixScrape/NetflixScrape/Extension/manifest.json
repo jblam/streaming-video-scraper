@@ -1,0 +1,22 @@
+﻿{
+  "manifest_version": 2,
+  "name": "Netflix Scrape",
+  "version": "0.1",
+  "description": "Provides remote-control API functionality for the Netflix browser UI",
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.netflix.com/*",
+        "*://localhost/*"
+      ],
+      "js": [ "content-script.js" ]
+    }
+  ],
+  "background": {"scripts": ["background-script.js"]},
+  "permissions": [
+    "*://*.netflix.com/*",
+    "*://localhost/*",
+    "history",
+    "webNavigation"
+  ]
+}

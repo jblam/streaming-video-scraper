@@ -7,6 +7,18 @@
 </head>
 <body>
     <h1>A page</h1>
+    <button id="query-string">pushstate query string</button>
+    <button id="hash">change hash</button>
+    <a href="#" id="navigate">Navigate</a>
+    <script>
+        document.getElementById("query-string").onclick = evt => {
+            history.pushState(null, null, "?pushstate=" + new Date().toISOString());
+        };
+        document.getElementById("hash").onclick = evt => {
+            location.hash = "#" + new Date().toISOString();
+        };
+        document.getElementById("navigate").href = "?location=" + new Date().toISOString();
+    </script>
     <form>
         <input id="message" />
         <button type="submit">Send</button>

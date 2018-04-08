@@ -12,6 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Extension\background-script.ts" />
+    <None Remove="Extension\content-script.ts" />
+    <None Remove="Extension\webextensions.d.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.WebSockets" Version="2.0.2" />
   </ItemGroup>
@@ -25,7 +31,28 @@
   </ItemGroup>
 
   <ItemGroup>
+    <TypeScriptCompile Include="Extension\background-script.ts" />
+    <TypeScriptCompile Include="Extension\content-script.ts" />
+    <TypeScriptCompile Include="Extension\webextensions.d.ts" />
     <TypeScriptCompile Include="wwwroot\js\socket.ts" />
   </ItemGroup>
+
+  <ProjectExtensions><VisualStudio><UserProperties Extension_4manifest_1json__JSONSchema="http://json.schemastore.org/webextension" /></VisualStudio></ProjectExtensions>
+
+  <PropertyGroup>
+    <TypeScriptTarget>ES2015</TypeScriptTarget>
+    <TypeScriptJSXEmit>None</TypeScriptJSXEmit>
+    <TypeScriptModuleKind>ES6</TypeScriptModuleKind>
+    <TypeScriptCompileOnSaveEnabled>True</TypeScriptCompileOnSaveEnabled>
+    <TypeScriptNoImplicitAny>False</TypeScriptNoImplicitAny>
+    <TypeScriptRemoveComments>False</TypeScriptRemoveComments>
+    <TypeScriptOutFile />
+    <TypeScriptOutDir />
+    <TypeScriptGeneratesDeclarations>False</TypeScriptGeneratesDeclarations>
+    <TypeScriptNoEmitOnError>True</TypeScriptNoEmitOnError>
+    <TypeScriptSourceMap>True</TypeScriptSourceMap>
+    <TypeScriptMapRoot />
+    <TypeScriptSourceRoot />
+  </PropertyGroup>
 
 </Project>
