@@ -76,5 +76,5 @@
         let portMessages = ports.map(p => p.postMessage(message));
         let serverMessage = asyncSocket.then(s => s.send(JSON.stringify(message)));
         await Promise.all([serverMessage, ...portMessages]);
-    });
+    }, { url: [{ hostEquals: 'netflix' }, { hostEquals: 'localhost' }, { hostEquals: '127.0.0.1' }] });
 }
