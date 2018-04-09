@@ -22,27 +22,29 @@
         }
         return output;
     }
-    let ports: browser.runtime.Port[] = [];
+    let port: browser.runtime.Port = null;
 
-    browser.runtime.onConnect.addListener(port => {
-        port.onMessage.addListener(message => onPortMessage(port, message as PortMessage));
-        ports.push(port);
-        console.log(`Adding new port; now ${ports.length} ports`);
-        if (ports.length > 0) {
-            asyncSocket = asyncSocket || connectSocket("ws://localhost:58687/ws-source");
+    browser.runtime.onConnect.addListener(newport => {
+        if (port) {
+            port.onMessage.removeListener(onPortMessage);
+            port.disconnect(); // TODO: will this result in Port.onDisconnect?
         }
-        port.onDisconnect.addListener(onPortDisconnect);
+        newport.onMessage.addListener(onPortMessage);
+        newport.onDisconnect.addListener(onPortDisconnect);
+        port = newport;
+        console.log('Adding new port');
+        asyncSocket = asyncSocket || connectSocket("ws://localhost:58687/ws-source");
     });
-    function onPortDisconnect(port: browser.runtime.Port) {
-        console.log("port disconnecting");
-        let oldPorts = ports;
-        ports = oldPorts.filter(p => p != port);
-        console.log(`Removed ${oldPorts.length - ports.length} ports; ${ports.length} remain`);
-        if (ports.length == 0) {
+    function onPortDisconnect(disconnectingPort: browser.runtime.Port) {
+        if (disconnectingPort == port) {
+            console.log("active port disconnecting");
+            port = null;
             setTimeout(closeSocket, 5000);
+        } else {
+            console.log("inactive port disconnecting");
         }
     }
-    async function onPortMessage(port: browser.runtime.Port, message: PortMessage) {
+    async function onPortMessage(message: PortMessage) {
         if (!message.url) {
             message.url = port.sender.url || "(no url)";
         }
@@ -50,7 +52,7 @@
         (await asyncSocket).send(JSON.stringify(message));
     }
     async function closeSocket() {
-        if (ports.length == 0 && asyncSocket) {
+        if (!port && asyncSocket) {
             console.log("disconnecting socket");
             let temp = asyncSocket;
             asyncSocket = null;
@@ -65,17 +67,19 @@
         }
     }
     function onSocketMessage(this: WebSocket, evt: MessageEvent) {
-        for (let p of ports) {
-            p.postMessage({ event: 'remoteMessage', message: evt.data });
-        }
+        port.postMessage({ event: 'remoteMessage', message: evt.data });
     }
 
     browser.webNavigation.onHistoryStateUpdated.addListener(async evt => {
+        if (evt.tabId != port.sender.tab.id) {
+            // event was received from a tab which is not *the* tab. ignore
+            return;
+        }
         let message = { event: 'onHistoryStateUpdated', url: evt.url };
         console.log(message);
-        let portMessages = ports.map(p => p.postMessage(message));
+        let portMessage = port.postMessage(message);
         let serverMessage = asyncSocket.then(s => s.send(JSON.stringify(message)));
-        await Promise.all([serverMessage, ...portMessages]);
+        await Promise.all([serverMessage, portMessage]);
     }, { url: [{ hostEquals: 'netflix' }, { hostEquals: 'localhost' }, { hostEquals: '127.0.0.1' }] });
 
 
