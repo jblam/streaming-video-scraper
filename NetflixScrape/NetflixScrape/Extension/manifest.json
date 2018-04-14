@@ -12,10 +12,16 @@
       "js": [ "content-script.js" ]
     }
   ],
-  "background": {"scripts": ["background-script.js"]},
-  "permissions": [
-    "*://*.netflix.com/*",
-    "*://localhost/*",
-    "webNavigation"
-  ]
-}
+  "background": {
+    "scripts": [
+      "util.js",
+      "extensionComms.js",
+      "background-script.js"
+    ]
+  },
+    "permissions": [
+      "*://*.netflix.com/*",
+      "*://localhost/*",
+      "webNavigation"
+    ]
+  }

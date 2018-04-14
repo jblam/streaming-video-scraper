@@ -13,6 +13,8 @@
   <ItemGroup>
     <None Remove="Extension\background-script.ts" />
     <None Remove="Extension\content-script.ts" />
+    <None Remove="Extension\extensionComms.ts" />
+    <None Remove="Extension\util.ts" />
     <None Remove="Extension\webextensions.d.ts" />
   </ItemGroup>
 
@@ -31,7 +33,9 @@
 
   <ItemGroup>
     <TypeScriptCompile Include="Extension\background-script.ts" />
+    <TypeScriptCompile Include="Extension\extensionComms.ts" />
     <TypeScriptCompile Include="Extension\content-script.ts" />
+    <TypeScriptCompile Include="Extension\util.ts" />
     <TypeScriptCompile Include="Extension\webextensions.d.ts" />
   </ItemGroup>
 

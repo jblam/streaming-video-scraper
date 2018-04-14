@@ -1,88 +1,13 @@
 ﻿namespace JBlam.NetflixScrape.Extension {
-    export interface PortMessage {
-        event: string;
-        url: string | Location;
+    function logEvent(event: { name: string, addListener: (...args: any[]) => void }) {
+        event.addListener((args: any) => console.log(event.name, args));
     }
-
-    let asyncSocket: Promise<WebSocket> = null;
-    function connectSocket(url: string): Promise<WebSocket> {
-        let resolve: (value: WebSocket) => void;
-        let reject: (reason: any) => void;
-        let output = new Promise<WebSocket>((res, rej) => {
-            resolve = res;
-            reject = rej;
-        });
-        console.log("connecting socket");
-        try {
-            let newSocket = new WebSocket(url);
-            newSocket.addEventListener('message', onSocketMessage, false);
-            newSocket.addEventListener('open', evt => resolve(newSocket), false);
-        } catch (e) {
-            reject(e);
-        }
-        return output;
-    }
-    let port: browser.runtime.Port = null;
-
-    browser.runtime.onConnect.addListener(newport => {
-        if (port) {
-            port.onMessage.removeListener(onPortMessage);
-            port.disconnect(); // TODO: will this result in Port.onDisconnect?
-        }
-        newport.onMessage.addListener(onPortMessage);
-        newport.onDisconnect.addListener(onPortDisconnect);
-        port = newport;
-        console.log('Adding new port');
-        asyncSocket = asyncSocket || connectSocket("ws://localhost:58687/ws-source");
-    });
-    function onPortDisconnect(disconnectingPort: browser.runtime.Port) {
-        if (disconnectingPort == port) {
-            console.log("active port disconnecting");
-            port = null;
-            setTimeout(closeSocket, 5000);
-        } else {
-            console.log("inactive port disconnecting");
-        }
-    }
-    async function onPortMessage(message: PortMessage) {
-        if (!message.url) {
-            message.url = port.sender.url || "(no url)";
-        }
-        console.log("background received", message);
-        (await asyncSocket).send(JSON.stringify(message));
-    }
-    async function closeSocket() {
-        if (!port && asyncSocket) {
-            console.log("disconnecting socket");
-            let temp = asyncSocket;
-            asyncSocket = null;
-            try {
-                (await temp).close();
-                console.log("disconnected socket");
-            } catch (e) {
-                console.error("failed to disconnect socket", e);
-            }
-        } else {
-            console.log("not disconnecting socket");
-        }
-    }
-    function onSocketMessage(this: WebSocket, evt: MessageEvent) {
-        port.postMessage({ event: 'remoteMessage', message: evt.data });
-    }
-
-    browser.webNavigation.onHistoryStateUpdated.addListener(async evt => {
-        if (evt.tabId != port.sender.tab.id) {
-            // event was received from a tab which is not *the* tab. ignore
-            return;
-        }
-        let message = { event: 'onHistoryStateUpdated', url: evt.url };
-        console.log(message);
-        let portMessage = port.postMessage(message);
-        let serverMessage = asyncSocket.then(s => s.send(JSON.stringify(message)));
-        await Promise.all([serverMessage, portMessage]);
-    }, { url: [{ hostEquals: 'netflix' }, { hostEquals: 'localhost' }, { hostEquals: '127.0.0.1' }] });
-
-
+    [
+        Comms.browserPort.closed,
+        Comms.browserPort.loaded,
+        Comms.browserPort.stateChange,
+        Comms.serverSocket.command
+    ].forEach(logEvent);
 
 
     

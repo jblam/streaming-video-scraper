@@ -16,7 +16,7 @@
     try {
         const port = browser.runtime.connect();
         console.log("created port");
-        port.postMessage({ event: 'loaded' });
+        port.postMessage({ event: 'loaded', url: null });
         port.onMessage.addListener(message => {
             console.log("received message:");
             feedbackElement.textContent = 'message';
