@@ -1,33 +1,4 @@
 ﻿namespace JBlam.NetflixScrape.Extension.Comms {
-    /** model type representing the on-screen state in the browser tab */
-    export type BrowserState = { state: string /* TODO */};
-    /** model type representing a server-issued command */
-    export interface ServerCommand { id: number };
-    /** model type representing the content-tab response to a command
-     * @see ServerCommand
-     */
-    export type ServerCommandResponse = OkCommandResponse | RejectedCommandResponse | ErrorCommandResponse;
-    interface OkCommandResponse {
-        /** the server-issued command identifier */
-        id: number,
-        /** the outcome description */
-        outcome: "ok"
-    };
-    interface RejectedCommandResponse {
-        /** the server-issued command identifier */
-        id: number,
-        /** the outcome description */
-        outcome: "rejected",
-        /** the reason why the command was rejected */
-        reason: string
-    }
-    interface ErrorCommandResponse {
-        /** the server-issued command identifier */
-        id: number,
-        outcome: "error",
-        message?: string
-    }
-
     interface PortCommandResponse {
         key: number,
         response: ServerCommandResponse
@@ -69,10 +40,6 @@
          * @param state the state model to notify
          */
         postState(state: BrowserState): Promise<void>;
-    }
-
-    function isValidCommand(command: ServerCommand, state: BrowserState): boolean {
-        throw new Error("Not implemented");
     }
 
 
@@ -197,18 +164,4 @@
         private futureSocket: Util.Future<WebSocket> = null;
     }
     export const serverSocket: IServerSocket = new ServerSocket(browserPort);
-
-
-    browserPort.stateChange.addListener(serverSocket.postState);
-    serverSocket.command.addListener(processCommand);
-    async function processCommand<T extends ServerCommand>(command: T): Promise<ServerCommandResponse> {
-        try {
-            if (!isValidCommand(command, browserPort.currentState)) {
-                return { id: command.id, outcome: "rejected", reason: "command not valid for current browser state" };
-            }
-            return await browserPort.executeCommandAsync(command);
-        } catch (e) {
-            return { id: command.id, outcome: "error", message: (e instanceof Error) ? e.message : <string>e };
-        }
-    }
 }

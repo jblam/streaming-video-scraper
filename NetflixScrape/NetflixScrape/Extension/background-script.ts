@@ -1,4 +1,33 @@
 ﻿namespace JBlam.NetflixScrape.Extension {
+    /** model type representing the on-screen state in the browser tab */
+    export type BrowserState = { state: string /* TODO */ };
+    /** model type representing a server-issued command */
+    export interface ServerCommand { id: number };
+    /** model type representing the content-tab response to a command
+     * @see ServerCommand
+     */
+    export type ServerCommandResponse = OkCommandResponse | RejectedCommandResponse | ErrorCommandResponse;
+    interface OkCommandResponse {
+        /** the server-issued command identifier */
+        id: number,
+        /** the outcome description */
+        outcome: "ok"
+    };
+    interface RejectedCommandResponse {
+        /** the server-issued command identifier */
+        id: number,
+        /** the outcome description */
+        outcome: "rejected",
+        /** the reason why the command was rejected */
+        reason: string
+    }
+    interface ErrorCommandResponse {
+        /** the server-issued command identifier */
+        id: number,
+        outcome: "error",
+        message?: string
+    }
+
     function logEvent(event: { name: string, addListener: (...args: any[]) => void }) {
         event.addListener((args: any) => console.log(event.name, args));
     }
@@ -8,6 +37,24 @@
         Comms.browserPort.stateChange,
         Comms.serverSocket.command
     ].forEach(logEvent);
+
+
+    function isValidCommand(command: ServerCommand, state: BrowserState): boolean {
+        throw new Error("Not implemented");
+    }
+
+    Comms.browserPort.loaded.addListener(msg => Comms.serverSocket.postState({ state: msg.url.toString() }));
+    Comms.serverSocket.command.addListener(processCommand);
+    async function processCommand<T extends ServerCommand>(command: T): Promise<ServerCommandResponse> {
+        try {
+            if (!isValidCommand(command, Comms.browserPort.currentState)) {
+                return { id: command.id, outcome: "rejected", reason: "command not valid for current browser state" };
+            }
+            return await Comms.browserPort.executeCommandAsync(command);
+        } catch (e) {
+            return { id: command.id, outcome: "error", message: (e instanceof Error) ? e.message : <string>e };
+        }
+    }
 
     export function sendMessage(message: any) {
         return Comms.browserPort.executeCommandAsync({ id: -1, message });
