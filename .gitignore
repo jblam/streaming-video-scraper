@@ -32,3 +32,4 @@ _ReSharper*/
 packages/
 *.js
 *.js.map
+/NetflixScrape/NetflixScrape.Websockets/Models/*.ts

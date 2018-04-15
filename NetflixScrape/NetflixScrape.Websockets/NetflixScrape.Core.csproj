@@ -4,10 +4,29 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>JBlam.NetflixScrape.Core</AssemblyName>
     <RootNamespace>JBlam.NetflixScrape.Core</RootNamespace>
+    <TypeScriptToolsVersion>2.5</TypeScriptToolsVersion>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="System.Net.WebSockets" Version="4.3.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Models\BrowseModel.d.ts">
+      <CustomToolNamespace>Models\BrowseModel.cs</CustomToolNamespace>
+    </None>
+    <None Update="Models\ProfileSelectModel.d.ts">
+      <CustomToolNamespace>Models\ProfileSelectModel.cs</CustomToolNamespace>
+    </None>
+    <None Update="Models\SearchModel.d.ts">
+      <CustomToolNamespace>Models\SearchModel.cs</CustomToolNamespace>
+    </None>
+    <None Update="Models\UiStateModel.d.ts">
+      <CustomToolNamespace>Models\UiStateModel.cs</CustomToolNamespace>
+    </None>
+    <None Update="Models\WatchModel.d.ts">
+      <CustomToolNamespace>Models\WatchModel.cs</CustomToolNamespace>
+    </None>
+  </ItemGroup>
 </Project>
