@@ -29,6 +29,7 @@ namespace JBlam.NetflixScrape.Server
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+            services.AddSourceClientStore();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -42,63 +43,7 @@ namespace JBlam.NetflixScrape.Server
             app.UseStaticFiles();
             app.UseWebSockets();
             app.UseMvc();
-
-            app.Use(async (context, next) =>
-            {
-                var isSource = context.Request.Path == "/ws-source";
-                var isClient = context.Request.Path == "/ws";
-
-                if (isSource || isClient)
-                {
-                    if (context.WebSockets.IsWebSocketRequest)
-                    {
-                        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                        if (isSource)
-                        {
-                            if (source?.IsDisposed == false)
-                            {
-                                await source.FinishAsync();
-                            }
-                            source = new WebsocketMessenger(webSocket);
-                            source.MessageReceived += Source_MessageReceived;
-                            await source.ReceiveTask;
-                        }
-                        if (isClient)
-                        {
-                            using (var client = new WebsocketMessenger(webSocket))
-                            {
-                                client.MessageReceived += Client_MessageReceived;
-                                clients.Add(client);
-                                await client.ReceiveTask;
-                                clients.Remove(client);
-                            }
-
-                        }
-                    }
-                    else
-                    {
-                        context.Response.StatusCode = 400;
-                    }
-                }
-                else
-                {
-                    await next();
-                }
-
-            });
+            app.UseSourceClientSockets();
         }
-
-        private async void Source_MessageReceived(object sender, WebsocketReceiveEventArgs e)
-        {
-            await Task.WhenAll(clients.Select(c => c.SendAsync(e.Message)));
-        }
-
-        private async void Client_MessageReceived(object sender, WebsocketReceiveEventArgs e)
-        {
-            await source.SendAsync(e.Message);
-        }
-
-        WebsocketMessenger source;
-        ISet<WebsocketMessenger> clients = new HashSet<WebsocketMessenger>();
     }
 }
