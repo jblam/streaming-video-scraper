@@ -21,7 +21,15 @@ namespace JBlam.NetflixScrape.Core.Models
         /// </summary>
         public ProfileSelectModel ProfileSelect { get; set; }
 
+        /// <summary>
+        /// Gets or sets the current browse state
+        /// </summary>
         public BrowseModel Browse { get; set; }
+
+        /// <summary>
+        /// Gets or sets the current show details
+        /// </summary>
+        public ShowDetailsModel Details { get; set; }
     }
 
     public enum UiState

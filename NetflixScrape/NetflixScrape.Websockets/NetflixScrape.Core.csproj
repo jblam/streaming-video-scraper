@@ -13,14 +13,23 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Models\BrowseCategoryModel.d.ts">
+      <CustomToolNamespace>Models\BrowseCategoryModel.cs</CustomToolNamespace>
+    </None>
     <None Update="Models\BrowseModel.d.ts">
       <CustomToolNamespace>Models\BrowseModel.cs</CustomToolNamespace>
+    </None>
+    <None Update="Models\BrowseSelectionModel.d.ts">
+      <CustomToolNamespace>Models\BrowseSelectionModel.cs</CustomToolNamespace>
     </None>
     <None Update="Models\ProfileSelectModel.d.ts">
       <CustomToolNamespace>Models\ProfileSelectModel.cs</CustomToolNamespace>
     </None>
     <None Update="Models\SearchModel.d.ts">
       <CustomToolNamespace>Models\SearchModel.cs</CustomToolNamespace>
+    </None>
+    <None Update="Models\ShowDetailsModel.d.ts">
+      <CustomToolNamespace>Models\ShowDetailsModel.cs</CustomToolNamespace>
     </None>
     <None Update="Models\UiStateModel.d.ts">
       <CustomToolNamespace>Models\UiStateModel.cs</CustomToolNamespace>

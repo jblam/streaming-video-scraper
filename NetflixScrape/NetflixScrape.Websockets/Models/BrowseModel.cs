@@ -9,10 +9,10 @@ namespace JBlam.NetflixScrape.Core.Models
         /// <summary>
         /// Gets or sets the categories currently reachable in the DOM
         /// </summary>
-        public IList<string> AvailableCategories { get; set; }
+        public ICollection<BrowseCategoryModel> Categories { get; private set; }
         /// <summary>
         /// Gets or sets a flat list of shows currently available in the DOM
         /// </summary>
-        public ICollection<string> AvailableShows { get; set; }
+        public BrowseSelectionModel Selection { get; private set; }
     }
 }
