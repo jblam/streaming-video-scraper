@@ -13,21 +13,33 @@
     feedbackElement.textContent = "Hi, this is a script";
     console.log("This is a script");
 
-    try {
-        const port = browser.runtime.connect();
-        console.log("created port");
-        port.postMessage({ event: 'loaded', url: null });
-        port.onMessage.addListener(message => {
-            console.log("received message:");
-            feedbackElement.textContent = 'message';
-        });
-        window.addEventListener('hashchange', async evt => {
+    let port: browser.runtime.Port;
+    window.addEventListener('hashchange', async evt => {
+        if (port) {
             port.postMessage({ event: 'hash changed', url: evt.newURL });
             console.log("sent hashchange", evt);
-        });
-    }
-    catch (e) {
-        console.error(e);
-        debugger;
+        } else {
+            console.log("no port available", evt);
+        }
+    });
+    port = getPort();
+
+    function getPort() {
+        console.log("attempting to connect");
+        try {
+            const newPort = browser.runtime.connect();
+            console.log("created port");
+            newPort.postMessage({ event: 'loaded', url: null });
+            newPort.onMessage.addListener(message => {
+                console.log("received message:", message);
+                feedbackElement.textContent = 'message';
+            });
+            newPort.onDisconnect.addListener(p => port = getPort());
+            return newPort;
+        }
+        catch (e) {
+            console.error(e);
+            debugger;
+        }
     }
 }

@@ -9,6 +9,10 @@
         Comms.serverSocket.command
     ].forEach(logEvent);
 
+    export function sendMessage(message: any) {
+        return Comms.browserPort.executeCommandAsync({ id: -1, message });
+    }
+
 
     
 

@@ -2,7 +2,7 @@
     /** model type representing the on-screen state in the browser tab */
     export type BrowserState = { state: string /* TODO */};
     /** model type representing a server-issued command */
-    export type ServerCommand = { id: number };
+    export interface ServerCommand { id: number };
     /** model type representing the content-tab response to a command
      * @see ServerCommand
      */
@@ -59,7 +59,7 @@
         /** Attempts to invoke a command on the content tab, when that tab becomes available
          * @param command the command to invoke
          */
-        executeCommandAsync(command: ServerCommand): Promise<ServerCommandResponse>;
+        executeCommandAsync<T extends ServerCommand>(command: T): Promise<ServerCommandResponse>;
     }
     /** represents a persistent object wrapper around the socket connection to the server */
     export interface IServerSocket {
@@ -95,12 +95,27 @@
             browser.runtime.onConnect.addListener(port => {
                 if (this.closingTimeout) {
                     clearTimeout(this.closingTimeout);
+                    console.log("Clearing timeout", this.closingTimeout, performance.now());
                     this.closingTimeout = null;
                 }
                 port.onDisconnect.addListener(p => {
-                    this.futurePort.reset;
+                    if (p !== this.futurePort.value()) {
+                        console.log("obsolete port closed");
+                        return;
+                    }
+                    this.futurePort.reset();
                     this.currentState = null;
-                    this.closingTimeout = this.closingTimeout || setTimeout(() => this.closed.raise(null), browserPortTimeout_ms);
+                    if (this.closingTimeout) {
+                        console.log("Timeout already exists", this.closingTimeout, performance.now());
+                    } else {
+                        this.closingTimeout = setTimeout(() => {
+                            console.log("Timeout elapsed", this.closingTimeout, performance.now());
+                            console.log(this.futurePort, port);
+                            this.closingTimeout = null;
+                            this.closed.raise(null);
+                        }, browserPortTimeout_ms);
+                    }
+                    console.log("Active timeout", this.closingTimeout, performance.now());
                 });
                 port.onMessage.addListener((message: BrowserLoadedArgs | BrowserState | PortCommandResponse | {}) => {
                     if (isLoadArgs(message)) {
@@ -123,7 +138,7 @@
                 this.futurePort.set(port);
             });
             browser.webNavigation.onHistoryStateUpdated.addListener(async evt => {
-                if (evt.tabId != (await this.futurePort.get()).sender.tab.id) {
+                if (evt.tabId != (await this.futurePort).sender.tab.id) {
                     // event was received from a tab which is not *the* tab. ignore.
                     return;
                 }
@@ -136,12 +151,12 @@
         public currentState: BrowserState;
         public async executeCommandAsync(command: ServerCommand): Promise<ServerCommandResponse> {
             let resolution = this.resolver.enregister();
-            (await this.futurePort.get()).postMessage({ key: resolution.key, command });
+            (await this.futurePort).postMessage({ key: resolution.key, command });
             return resolution.promise;
         }
         
         private readonly resolver = new Util.PromiseResolver<ServerCommandResponse>();
-        private readonly futurePort = new Util.FutureThing<browser.runtime.Port>();
+        private readonly futurePort = new Util.Future<browser.runtime.Port>();
         private closingTimeout: number|null = null;
     }
     export const browserPort: IBrowserPort = new BrowserPort();
@@ -150,7 +165,7 @@
         constructor(port: IBrowserPort) {
             port.loaded.addListener(evt => this.ensureSocketConnected());
             port.closed.addListener(async () => {
-                let closingSocket = this.futureSocket.get();
+                let closingSocket = this.futureSocket;
                 this.futureSocket = null;
                 (await closingSocket).close();
             });
@@ -163,12 +178,12 @@
                 // will ensure that a future-socket is created
                 throw new Error("No open socket");
             }
-            (await this.futureSocket.get()).send(JSON.stringify(state));
+            (await this.futureSocket).send(JSON.stringify(state));
         }
 
         private ensureSocketConnected() {
             if (!this.futureSocket) {
-                this.futureSocket = new Util.FutureThing<WebSocket>();
+                this.futureSocket = new Util.Future<WebSocket>();
                 let newSocket = new WebSocket("ws://localhost:58687/ws-source");
                 newSocket.addEventListener('message', this.onSocketMessage, false);
                 newSocket.addEventListener('open', evt => this.futureSocket.set(newSocket), false);
@@ -179,14 +194,14 @@
             let command = evt.data as ServerCommand;
             this.command.raise(command);
         }
-        private futureSocket: Util.FutureThing<WebSocket> = null;
+        private futureSocket: Util.Future<WebSocket> = null;
     }
     export const serverSocket: IServerSocket = new ServerSocket(browserPort);
 
 
     browserPort.stateChange.addListener(serverSocket.postState);
     serverSocket.command.addListener(processCommand);
-    async function processCommand(command: ServerCommand): Promise<ServerCommandResponse> {
+    async function processCommand<T extends ServerCommand>(command: T): Promise<ServerCommandResponse> {
         try {
             if (!isValidCommand(command, browserPort.currentState)) {
                 return { id: command.id, outcome: "rejected", reason: "command not valid for current browser state" };
