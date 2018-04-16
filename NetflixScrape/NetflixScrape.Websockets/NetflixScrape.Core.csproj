@@ -13,6 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Models\BackCommand.d.ts">
+      <CustomToolNamespace>Models\BackCommand.cs</CustomToolNamespace>
+    </None>
     <None Update="Models\BrowseCategoryModel.d.ts">
       <CustomToolNamespace>Models\BrowseCategoryModel.cs</CustomToolNamespace>
     </None>
@@ -22,11 +25,17 @@
     <None Update="Models\BrowseSelectionModel.d.ts">
       <CustomToolNamespace>Models\BrowseSelectionModel.cs</CustomToolNamespace>
     </None>
+    <None Update="Models\MoveCommand.d.ts">
+      <CustomToolNamespace>Models\MoveCommand.cs</CustomToolNamespace>
+    </None>
     <None Update="Models\ProfileSelectModel.d.ts">
       <CustomToolNamespace>Models\ProfileSelectModel.cs</CustomToolNamespace>
     </None>
     <None Update="Models\SearchModel.d.ts">
       <CustomToolNamespace>Models\SearchModel.cs</CustomToolNamespace>
+    </None>
+    <None Update="Models\SelectCommand.d.ts">
+      <CustomToolNamespace>Models\SelectCommand.cs</CustomToolNamespace>
     </None>
     <None Update="Models\ShowDetailsModel.d.ts">
       <CustomToolNamespace>Models\ShowDetailsModel.cs</CustomToolNamespace>

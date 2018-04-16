@@ -37,15 +37,27 @@
         }
         return parameter.Type.Name;
     }
+    string Identifier(Class c)
+    {
+        if (c.Name.EndsWith("Command"))
+        {
+            return $"command: \"{c.name.Replace("Command", "")}\";";
+        }
+        if (c.Name.EndsWith("Model"))
+        {
+            return $"$type: \"{c.name.Replace("Model", "")}\";";
+        }
+        return "";
+    }
 }
 $Classes(*Model)[$Properties(p => RequiresReference(p.Type))[
 /// <reference path="$Type.d.ts" />]
 $Properties[$Type[$TypeArguments(arg => RequiresReference(arg))[
 /// <reference path="$Name.d.ts" />]]]]
 declare namespace JBlam.NetflixScrape.Core.Models {
-    $Classes(*Model)[
+    $Classes(JBlam.NetflixScrape.Core.Models.*)[
     export interface $Name {
-
+        $Identifier
         $Properties[
         /**
 		 * $SafeDocComment

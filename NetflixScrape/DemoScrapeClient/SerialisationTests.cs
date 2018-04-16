@@ -8,6 +8,20 @@ using Xunit;
 
 namespace JBlam.NetflixScrape.DemoScrapeClient
 {
+    public class AmazingSerialisationBinder : Newtonsoft.Json.Serialization.ISerializationBinder
+    {
+        public void BindToName(Type serializedType, out string assemblyName, out string typeName)
+        {
+            assemblyName = null;
+            typeName = serializedType.Name.Replace("Model", "").Replace("Command", "");
+        }
+
+        public Type BindToType(string assemblyName, string typeName)
+        {
+            return Type.GetType(typeName + "Model") ?? Type.GetType(typeName + "Command");
+        }
+    }
+
     public class SerialisationTests
     {
         [Fact]
@@ -17,7 +31,7 @@ namespace JBlam.NetflixScrape.DemoScrapeClient
             {
                 Duration = TimeSpan.FromSeconds(1.5)
             };
-            var jsonString = JsonConvert.SerializeObject(watchModel);
+            var jsonString = JsonConvert.SerializeObject(watchModel, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects, SerializationBinder = new AmazingSerialisationBinder() });
             var jObject = JObject.Parse(jsonString);
             var serialisedDuration = jObject["Duration"];
             Assert.Equal(JTokenType.Float, serialisedDuration.Type);
