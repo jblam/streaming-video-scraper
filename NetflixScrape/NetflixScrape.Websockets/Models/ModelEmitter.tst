@@ -66,8 +66,5 @@ declare namespace JBlam.NetflixScrape.Core.Models {
     }]
 
     $Enums()[
-    export enum $Name {
-        $Values[$name,
-        ]
-    }]
+    export type $Name = $Values["$name"][|];]
 }
