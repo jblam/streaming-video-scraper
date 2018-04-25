@@ -28,6 +28,7 @@
     }
     bool IsDateTime(Type type) => type.FullName == "System.TimeSpan";
     bool RequiresReference(Type type) => type.FullName.StartsWith("JBlam") && !type.IsEnum;
+    bool IsModelOrCommand(Class type) => type.Namespace.StartsWith("JBlam.NetflixScrape.Core.Models") && type.FullName.EndsWith("Model") || type.FullName.EndsWith("Command");
     string TypeConverter(Parameter parameter)
     {
         if (IsDateTime(parameter.Type))
@@ -55,7 +56,7 @@ $Classes(*Model)[$Properties(p => RequiresReference(p.Type))[
 $Properties[$Type[$TypeArguments(arg => RequiresReference(arg))[
 /// <reference path="$Name.d.ts" />]]]]
 declare namespace JBlam.NetflixScrape.Core.Models {
-    $Classes(JBlam.NetflixScrape.Core.Models.*)[
+    $Classes(c => IsModelOrCommand(c))[
     export interface $Name {
         $Identifier
         $Properties[

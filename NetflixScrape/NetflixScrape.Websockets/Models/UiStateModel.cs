@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -9,6 +11,7 @@ namespace JBlam.NetflixScrape.Core.Models
         /// <summary>
         /// Gets or sets the current UI state
         /// </summary>
+        [JsonConverter(typeof(StringEnumConverter), true)]
         public UiState State { get; set; }
 
         /// <summary>

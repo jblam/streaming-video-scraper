@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -30,6 +31,7 @@ namespace JBlam.NetflixScrape.Core.Models
         /// <summary>
         /// Gets or sets the current playback state
         /// </summary>
+        [JsonConverter(typeof(StringEnumConverter), true)]
         public PlaybackState PlaybackState { get; set; }
     }
     internal class TimeSpanToSecondsConverter : JsonConverter

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -13,6 +15,7 @@ namespace JBlam.NetflixScrape.Core.Models
         /// <summary>
         /// Gets the direction in which movement should occur
         /// </summary>
+        [JsonConverter(typeof(StringEnumConverter), true)]
         public Direction Direction { get; private set; }
     }
     public enum Direction
