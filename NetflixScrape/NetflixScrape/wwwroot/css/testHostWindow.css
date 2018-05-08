@@ -1,0 +1,29 @@
+﻿html, body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+#view-root {
+    flex: 1;
+    border: solid 2px black;
+    margin: 3em;
+    padding: 1em;
+}
+
+/* browse styles */
+.rowContainer {
+    display: flex;
+}
+.handleNext {
+    order: 2;
+}
+.title-card:not(:first-of-type) {
+    border-left: solid 1px;
+}
+.title-card {
+    padding: 1ex;
+}
