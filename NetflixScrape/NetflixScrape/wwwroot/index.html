@@ -7,73 +7,8 @@
 </head>
 <body>
     <h1>A page</h1>
-    <template id="profile-selected">
-        <div class="account-dropdown-button">
-            <div>
-                <a class="profile-link">[selected profile]</a>
-            </div>
-        </div>
-    </template>
-    <template id="profile-select">
-        <div>
-            <a class="profile-link">Steveo <span>is a twit</span></a>
-            <a class="profile-link">Big kev <span>likes knitting</span></a>
-            <a class="profile-link">Kids</a>
-            <a class="not-profile">Not a profile</a>
-        </div>
-    </template>
-    <template id="browse-row">
-        <div class="lolomoRow">
-            <h2 class="rowHeader"><span class="row-header-title">[row title]</span> [extra text]</h2>
-            <div class="rowContainer" data-id-template="row-[n]">
-                <button class="handleNext">&gt;</button>
-                <button class="handlePrev">&lt;</button>
-                <div class="title-card">[Show]</div>
-            </div>
-        </div>
-    </template>
-    <template id="show-details">
-        <div class="jawBoneContent open">
-            <div>
-                Overview
-                <a role="link" class="playLink">Next episode</a>
-                <a role="link">My list</a>
-                <a role="link">+1</a>
-                <a role="link">-1</a>
-                <a role="link">Overview</a>
-                <a role="link">Episodes</a>
-                <a role="link">More Like This</a>
-                <a role="link">Details</a>
-            </div>
-            <div>
-                Episodes
-                <div class="episodesContainer" role="button">
-                    TODO
-                </div>
-            </div>
-            <button role="button" class="close-button">Close</button>
-        </div>
-    </template>
 
-    <div id="view-root"></div>
-
-    <button id="query-string">pushstate query string</button>
-    <button id="hash">change hash</button>
-    <a href="#" id="navigate">Navigate</a>
-    <script>
-        document.getElementById("query-string").onclick = evt => {
-            history.pushState(null, null, "?pushstate=" + new Date().toISOString());
-        };
-        document.getElementById("hash").onclick = evt => {
-            location.hash = "#" + new Date().toISOString();
-        };
-        document.getElementById("navigate").href = "?location=" + new Date().toISOString();
-    </script>
-    <form>
-        <input id="message" />
-        <button type="submit">Send</button>
-    </form>
-    <ol id="received"></ol>
+    <iframe id="view-root"></iframe>
 
     <script src="js/testHostWindow.js"></script>
 </body>

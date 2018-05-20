@@ -1,39 +1,38 @@
 ﻿/// <reference path="../../Extension/models.d.ts" />
 namespace JBlam.NetflixScrape.Test {
     import models = JBlam.NetflixScrape.Core.Models;
-    const viewRoot = document.getElementById("view-root");
-    function getTemplate(id: string) { return document.getElementById(id) as HTMLTemplateElement; }
-    const templates = {
-        profileSelected: getTemplate("profile-selected"),
-        profileSelect: getTemplate("profile-select"),
-        browseRow: getTemplate("browse-row"),
-        showDetails: getTemplate("show-details")
-    };
-    function clearRoot() { while (viewRoot.hasChildNodes()) viewRoot.removeChild(viewRoot.firstChild); }
-    export function setProfileSelect() {
-        clearRoot();
-        let clone = document.importNode(templates.profileSelect.content, true);
-        viewRoot.appendChild(clone);
-    }
-    export function setBrowse() {
-        clearRoot();
-        viewRoot.appendChild(document.importNode(templates.profileSelected.content, true));
-        const categoryCount = 3;
-        const showCount = 8;
-        for (var i = 0; i < categoryCount; i++) {
-            let clone = document.importNode(templates.browseRow.content, true);
-            viewRoot.appendChild(clone);
-            let category = viewRoot.lastElementChild;
-            category.querySelector(".row-header-title").textContent = `cat ${i}`;
-            let templateShowCard = category.querySelector(".title-card");
-            for (var j = 0; j < showCount; j++) {
-                let clonedShow = templateShowCard.cloneNode();
-                clonedShow.textContent = `cat ${i} show ${j}`;
-                templateShowCard.parentElement.appendChild(clonedShow);
+    const viewRoot = <HTMLIFrameElement>document.getElementById("view-root");
+    export function loadTemplate(templateFileName?: string) {
+        if (!templateFileName) {
+            viewRoot.src = '';
+            return Promise.resolve(viewRoot.contentDocument);
+        } else {
+            let url = `/ui-state/${templateFileName}.html`;
+            let resolve: (value: Document) => void;
+            let reject: (reason: Error) => void;
+            function loadHandler(evt: Event) {
+                viewRoot.removeEventListener('load', loadHandler);
+                viewRoot.removeEventListener('error', errorHandler);
+                resolve(viewRoot.contentDocument);
             }
-            templateShowCard.parentElement.removeChild(templateShowCard);
+            function errorHandler(evt: ErrorEvent) {
+                viewRoot.removeEventListener('load', loadHandler);
+                viewRoot.removeEventListener('error', errorHandler);
+                reject(evt.error);
+            }
+            viewRoot.addEventListener('load', loadHandler, false);
+            viewRoot.addEventListener('error', errorHandler, false);
+            var output = new Promise<Document>((res, rej) => {
+                resolve = res;
+                reject = rej;
+            });
+            viewRoot.src = url;
+            return output;
         }
     }
+
+
+    
     export function getState(root: HTMLElement): models.UiStateModel {
         function getStateEnum(partialState: Partial<models.UiStateModel>): models.UiState {
             if (partialState.profileSelect && partialState.profileSelect.availableProfiles) {
@@ -68,7 +67,7 @@ namespace JBlam.NetflixScrape.Test {
                 // TODO: scroll positioning
                 return {
                     $type: "browseCategory",
-                    title: el.querySelector(".row-header-title").textContent,
+                    title: (titleEl => titleEl && titleEl.textContent)(el.querySelector(".row-header-title")),
                     availableShowTitles: Array.from(el.querySelectorAll(".title-card"), el => el.textContent),
                     availablePageCount: 0,
                     pageIndex: 0
@@ -78,7 +77,7 @@ namespace JBlam.NetflixScrape.Test {
             if (allCategories.length) {
                 return {
                     $type: "browse",
-                    categories: Array.from(root.querySelectorAll(".lolomoRow"), getCategoryModel),
+                    categories: Array.from(root.querySelectorAll(".lolomoRow"), getCategoryModel).filter(cat => cat.availableShowTitles.length),
                     selection: null
                 };
             }
@@ -112,7 +111,9 @@ namespace JBlam.NetflixScrape.Test {
         output.state = getStateEnum(output);
         return output;
     }
-
-    setProfileSelect();
-    console.log(getState(viewRoot));
+    
+    (async () => {
+        var templateDocument = await loadTemplate('browse');
+        console.log(await getState(templateDocument.body));
+    })();
 }
