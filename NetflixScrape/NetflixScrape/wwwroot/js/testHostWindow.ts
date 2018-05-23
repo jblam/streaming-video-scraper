@@ -44,16 +44,17 @@ namespace JBlam.NetflixScrape.Test {
             return "browse";
         }
         function getProfileSelectModel(root: HTMLElement): models.ProfileSelectModel {
-            let isProfileSelected = root.querySelector(".profile-link").parentElement.parentElement.classList.contains("account-dropdown-button");
-            let profiles = Array.from(root.querySelectorAll(".profile-link"), x => x.textContent.trim());
+            const profileLinkClass = ".profile-link";
+            let isProfileSelected = root.querySelector(profileLinkClass).parentElement.parentElement.classList.contains("account-dropdown-button");
             if (isProfileSelected) {
                 return {
                     $type: "profileSelect",
                     availableProfiles: null,
                     availableProfilesExcludingKids: null,
-                    selectedProfile: profiles[0]
+                    selectedProfile: root.querySelector(profileLinkClass).parentElement.getAttribute("aria-label").replace(/ -.*/, "")
                 };
             } else {
+                let profiles = Array.from(root.querySelectorAll(profileLinkClass), x => x.textContent.trim());
                 return {
                     $type: "profileSelect",
                     availableProfiles: profiles,
@@ -113,7 +114,7 @@ namespace JBlam.NetflixScrape.Test {
     }
     
     (async () => {
-        var templateDocument = await loadTemplate('browse');
+        var templateDocument = await loadTemplate('details-tvshow');
         console.log(await getState(templateDocument.body));
     })();
 }
