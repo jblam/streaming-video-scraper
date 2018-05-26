@@ -65,13 +65,15 @@ namespace JBlam.NetflixScrape.Test {
         }
         function getBrowseModel(root: HTMLElement): models.BrowseModel {
             function getCategoryModel(el: Element): models.BrowseCategoryModel {
-                // TODO: scroll positioning
+                const paginationIndicatorSelector = ".pagination-indicator li";
+                let availablePageCount = el.querySelectorAll(paginationIndicatorSelector).length;
+                let unselectedFollowingPageCount = el.querySelectorAll(paginationIndicatorSelector + ".active ~ li").length;
                 return {
                     $type: "browseCategory",
                     title: (titleEl => titleEl && titleEl.textContent)(el.querySelector(".row-header-title")),
                     availableShowTitles: Array.from(el.querySelectorAll(".title-card"), el => el.textContent),
-                    availablePageCount: 0,
-                    pageIndex: 0
+                    availablePageCount: availablePageCount,
+                    pageIndex: Math.max(availablePageCount - unselectedFollowingPageCount - 1, 0)
                 }
             }
             let allCategories = Array.from(root.querySelectorAll(".lolomoRow"), getCategoryModel);
@@ -85,13 +87,12 @@ namespace JBlam.NetflixScrape.Test {
             return null;
         }
         function getSearchModel(root: HTMLElement): models.SearchModel {
-            let searchBox = root.querySelector(".searchBox");
+            let searchBox = root.querySelector(".searchBox input");
             if (searchBox) {
-                // TODO: search
                 return {
                     $type: "search",
-                    availableShows: null,
-                    searchTerm: null
+                    availableShows: Array.from(root.querySelectorAll(".title-card"), el => el.textContent),
+                    searchTerm: (<HTMLInputElement>root.querySelector(".searchInput input")).value
                 }
             }
             return null;
