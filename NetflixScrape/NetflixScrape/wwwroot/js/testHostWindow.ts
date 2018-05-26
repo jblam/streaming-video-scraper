@@ -41,11 +41,19 @@ namespace JBlam.NetflixScrape.Test {
             if (partialState.search && partialState.search.searchTerm) {
                 return "search";
             }
-            return "browse";
+            if (partialState.browse) {
+                return "browse";
+            }
+            if (partialState.watch) {
+                return "watch";
+            }
+            return null;
         }
         function getProfileSelectModel(root: HTMLElement): models.ProfileSelectModel {
             const profileLinkClass = ".profile-link";
-            let isProfileSelected = root.querySelector(profileLinkClass).parentElement.parentElement.classList.contains("account-dropdown-button");
+            let profileLink = root.querySelector(profileLinkClass);
+            if (!profileLink) { return null; }
+            let isProfileSelected = profileLink.parentElement.parentElement.classList.contains("account-dropdown-button");
             if (isProfileSelected) {
                 return {
                     $type: "profileSelect",
@@ -102,12 +110,31 @@ namespace JBlam.NetflixScrape.Test {
             if (!el) { return null; }
             throw new Error("Not implemented");
         }
+        function getWatchModel(root: HTMLElement): models.WatchModel {
+            let video = <HTMLVideoElement>root.querySelector(".VideoContainer video");
+            if (video) return {
+                $type: "watch",
+                duration: video.duration,
+                playbackState: video.readyState <= HTMLVideoElement.prototype.HAVE_METADATA
+                    ? "waiting"
+                    : video.paused
+                        ? "paused"
+                        : "playing",
+                position: video.currentTime,
+                showTitle: Array.from(root.querySelector(".video-title").children)
+                    .map(c => Array.from(c.children))
+                    .reduce((prev, cur) => prev.concat(cur))
+                    .map(el => el.textContent).join(" ")
+            };
+            return null;
+        }
         var output: models.UiStateModel = {
             $type: "uiState",
             browse: getBrowseModel(root),
             profileSelect: getProfileSelectModel(root),
             search: getSearchModel(root),
             details: getDetailsModel(root),
+            watch: getWatchModel(root),
             state: null
         };
         output.state = getStateEnum(output);
