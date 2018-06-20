@@ -25,6 +25,9 @@
     <None Update="Models\BrowseSelectionModel.d.ts">
       <CustomToolNamespace>Models\BrowseSelectionModel.cs</CustomToolNamespace>
     </None>
+    <None Update="Models\EpisodeSelectModel.d.ts">
+      <CustomToolNamespace>Models\EpisodeSelectModel.cs</CustomToolNamespace>
+    </None>
     <None Update="Models\MoveCommand.d.ts">
       <CustomToolNamespace>Models\MoveCommand.cs</CustomToolNamespace>
     </None>

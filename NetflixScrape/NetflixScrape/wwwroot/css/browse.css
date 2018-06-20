@@ -28,3 +28,14 @@ ul.pagination-indicator li.active {
 .see-all-link {
   font-size: 0.8rem;
 }
+.episodesContainer {
+    overflow-x: hidden;
+}
+.episodeNumber {
+    background: white;
+    display: inline-block;
+    padding: 0 5px;
+}
+.episodeWrapper {
+    transform: translate(126%, 0);
+}

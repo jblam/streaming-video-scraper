@@ -106,9 +106,26 @@ namespace JBlam.NetflixScrape.Test {
             return null;
         }
         function getDetailsModel(root: HTMLElement): models.ShowDetailsModel {
-            var el = root.querySelector(".jawBoneContent.open");
-            if (!el) { return null; }
-            throw new Error("Not implemented");
+            let detailsContainer = root.querySelector(".jawBone");
+            if (!detailsContainer) { return null; }
+            let episodesContainer = detailsContainer.querySelector(".episodesContainer");
+            let showTitle = detailsContainer.querySelector("h1, h2, h3");
+            let activePane = detailsContainer.querySelector(".jawBonePane");
+            function getEpisodesModel(detailsRoot: Element): models.EpisodeSelectModel {
+                var episodesRoot = detailsRoot.querySelector(".episodesContainer");
+                if (!episodesRoot) { return null; }
+                return {
+                    $type: "episodeSelect",
+                    
+                }
+            }
+            return {
+                $type: "showDetails",
+                showTitle: showTitle.textContent || showTitle.querySelector("img").alt,
+                selectedDetailTab: activePane.id.split('-')[1],
+                availableDetailsTabs: Array.from(detailsContainer.querySelectorAll("[role=tablist] [role=link]")).map(el => el.textContent),
+                episodes: getEpisodesModel(detailsContainer)
+            };
         }
         function getWatchModel(root: HTMLElement): models.WatchModel {
             let video = <HTMLVideoElement>root.querySelector(".VideoContainer video");
