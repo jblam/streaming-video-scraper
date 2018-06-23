@@ -31,6 +31,37 @@ namespace JBlam.NetflixScrape.Test {
         }
     }
 
+    class Slider {
+        constructor(el: Element) {
+            if (!el.classList.contains("slider")) { throw new Error("Root element does not contain the CSS class 'slider'"); }
+            this.root = el;
+            this.paginationRoot = el.querySelector(".pagination-indicator");
+            this.pageCount = this.paginationRoot
+                ? this.paginationRoot.querySelectorAll("li").length
+                : null;
+        }
+
+        private readonly root: Element;
+        private readonly paginationRoot: Element | null;
+
+        public get visibleItems() {
+            const selector = ".slider-item:not(.slider-item-)";
+            let root = this.root;
+            return Array.from(root.querySelectorAll(selector)).map(el => el.textContent);
+        }
+
+        public readonly pageCount: number;
+        public get activePage() {
+            let activePage = this.paginationRoot && this.paginationRoot.querySelector(".active");
+            if (!activePage) { return null; }
+            return this.pageCount - this.paginationRoot.querySelectorAll("li.active ~ li").length;
+        }
+
+        private click(selector: string) { (<HTMLElement>this.root.querySelector(selector)).click(); }
+        public nextPage() { this.click(".handleNext"); }
+        public prevPage() { this.click(".handlePrev"); }
+    }
+
 
     
     export function getState(root: HTMLElement): models.UiStateModel {
@@ -108,7 +139,8 @@ namespace JBlam.NetflixScrape.Test {
         function getDetailsModel(root: HTMLElement): models.ShowDetailsModel {
             let detailsContainer = root.querySelector(".jawBone");
             if (!detailsContainer) { return null; }
-            let episodesContainer = detailsContainer.querySelector(".episodesContainer");
+            let episodesSliderElement = detailsContainer.querySelector(".episodesContainer .slider");
+            let episodesSlider = episodesSliderElement && new Slider(episodesSliderElement);
             let showTitle = detailsContainer.querySelector("h1, h2, h3");
             let activePane = detailsContainer.querySelector(".jawBonePane");
             function getEpisodesModel(detailsRoot: Element): models.EpisodeSelectModel {
@@ -116,8 +148,11 @@ namespace JBlam.NetflixScrape.Test {
                 if (!episodesRoot) { return null; }
                 return {
                     $type: "episodeSelect",
-                    
-                }
+                    seasonTitles: [],
+                    episodeTitles: episodesSlider.visibleItems,
+                    selectedEpisodeIndex: 0,
+                    selectedSeasonIndex: 0
+                };
             }
             return {
                 $type: "showDetails",
