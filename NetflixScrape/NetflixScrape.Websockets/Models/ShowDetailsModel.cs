@@ -6,9 +6,9 @@ namespace JBlam.NetflixScrape.Core.Models
 {
     public class ShowDetailsModel
     {
-        public ICollection<string> SeasonTitles { get; private set; }
-        public int SelectedSeasonIndex { get; private set; }
-        public ICollection<string> EpisodeTitles { get; private set; }
-        public int SelectedEpisodeIndex { get; private set; }
+        public string ShowTitle { get; private set; }
+        public string SelectedDetailTab { get; private set; }
+        public ICollection<string> AvailableDetailsTabs { get; private set; }
+        public EpisodeSelectModel Episodes { get; private set; }
     }
 }

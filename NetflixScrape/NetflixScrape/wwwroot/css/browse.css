@@ -1,0 +1,41 @@
+
+.sliderContent {
+  display: flex;
+  flex-direction: row;
+  margin: 0 -4px;
+}
+.slider-item {
+  flex: 1;
+  border: solid 1px;
+  margin: 2px;
+  padding: 2px;
+}
+.slider-item- {
+  display: none;
+}
+.svg-icon {
+  display: none;
+}
+.pagination-indicator {
+  display: flex;
+}
+ul.pagination-indicator li {
+  width: 8px;
+}
+ul.pagination-indicator li.active {
+  color: red;
+}
+.see-all-link {
+  font-size: 0.8rem;
+}
+.episodesContainer {
+    overflow-x: hidden;
+}
+.episodeNumber {
+    background: white;
+    display: inline-block;
+    padding: 0 5px;
+}
+.episodeWrapper {
+    transform: translate(126%, 0);
+}

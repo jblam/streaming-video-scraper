@@ -29,7 +29,7 @@
     bool IsDateTime(Type type) => type.FullName == "System.TimeSpan";
     bool RequiresReference(Type type) => type.FullName.StartsWith("JBlam") && !type.IsEnum;
     bool IsModelOrCommand(Class type) => type.Namespace.StartsWith("JBlam.NetflixScrape.Core.Models") && type.FullName.EndsWith("Model") || type.FullName.EndsWith("Command");
-    string TypeConverter(Parameter parameter)
+    string TypeConverter(Property parameter)
     {
         if (IsDateTime(parameter.Type))
         {
@@ -63,7 +63,7 @@ declare namespace JBlam.NetflixScrape.Core.Models {
         /**
 		 * $SafeDocComment
 		 */
-        $name: $Type;]
+        $name: $TypeConverter;]
     }]
 
     $Enums()[

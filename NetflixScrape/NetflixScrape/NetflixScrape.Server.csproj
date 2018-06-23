@@ -2,12 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <TypeScriptToolsVersion>2.5</TypeScriptToolsVersion>
+    <TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
     <AssemblyName>NetflixScrape.Server</AssemblyName>
     <RootNamespace>JBlam.NetflixScrape.Server</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="wwwroot\js\testHostWindow.ts" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,6 +40,7 @@
     <TypeScriptCompile Include="Extension\models.d.ts" />
     <TypeScriptCompile Include="Extension\util.ts" />
     <TypeScriptCompile Include="Extension\webextensions.d.ts" />
+    <TypeScriptCompile Include="wwwroot\js\testHostWindow.ts" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties Extension_4manifest_1json__JSONSchema="http://json.schemastore.org/webextension" /></VisualStudio></ProjectExtensions>

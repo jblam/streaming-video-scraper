@@ -33,6 +33,11 @@ namespace JBlam.NetflixScrape.Core.Models
         /// Gets or sets the current show details
         /// </summary>
         public ShowDetailsModel Details { get; set; }
+
+        /// <summary>
+        /// Gets or sets the currently-playing show details
+        /// </summary>
+        public WatchModel Watch { get; set; }
     }
 
     public enum UiState
