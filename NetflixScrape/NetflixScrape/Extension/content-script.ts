@@ -25,6 +25,13 @@
     });
     port = getPort();
 
+    function isPortCommand(o: object): o is Comms.PortCommand {
+        function isServerCommand(c: any): c is ServerCommand {
+            return typeof c["id"] === "number";
+        }
+        return typeof (<any>o).key === "number" && isServerCommand((<any>o).command);
+    }
+
     function getPort() {
         console.log("attempting to connect");
         try {
@@ -32,9 +39,13 @@
             console.log("created port");
             newPort.postMessage({ event: 'loaded', url: null });
             newPort.onMessage.addListener(message => {
-                console.log("received message:", message);
-                feedbackElement.textContent = 'message';
                 console.log(getState(document.body));
+                if (isPortCommand(message)) {
+                    // TODO: something with command
+                    console.log("received valid command", message);
+                } else {
+                    console.error("Unable to interpret command", message);
+                }
             });
             newPort.onDisconnect.addListener(p => port = getPort());
             return newPort;

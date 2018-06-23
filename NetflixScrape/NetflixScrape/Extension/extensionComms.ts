@@ -3,7 +3,7 @@
         key: number,
         response: ServerCommandResponse
     }
-    interface PortCommand {
+    export interface PortCommand {
         key: number,
         command: ServerCommand
     }
