@@ -1,62 +1,35 @@
-﻿namespace JBlam.NetflixScrape.Extension {
+﻿/// <reference path="../../Extension/models.d.ts" />
+namespace JBlam.NetflixScrape.Test {
     import models = JBlam.NetflixScrape.Core.Models;
-    const feedbackElement = document.createElement('div');
-    feedbackElement.style.position = 'absolute';
-    feedbackElement.style.top = '10px';
-    feedbackElement.style.left = '10px';
-    feedbackElement.style.minWidth = '33%';
-    feedbackElement.style.maxWidth = '66%';
-    feedbackElement.style.opacity = '0.25';
-    feedbackElement.style.border = 'solid 2px black';
-    feedbackElement.style.background = 'white';
-    feedbackElement.style.color = 'red';
-    document.body.appendChild(feedbackElement);
-    feedbackElement.textContent = "Hi, this is a script";
-    console.log("This is a script");
-
-    let port: browser.runtime.Port;
-    window.addEventListener('hashchange', async evt => {
-        if (port) {
-            port.postMessage({ event: 'hash changed', url: evt.newURL });
-            console.log("sent hashchange", evt);
+    const viewRoot = <HTMLIFrameElement>document.getElementById("view-root");
+    export function loadTemplate(templateFileName?: string) {
+        if (!templateFileName) {
+            viewRoot.src = '';
+            return Promise.resolve(viewRoot.contentDocument);
         } else {
-            console.log("no port available", evt);
-        }
-    });
-    port = getPort();
-
-    function isPortCommand(o: object): o is Comms.PortCommand {
-        function isServerCommand(c: any): c is ServerCommand {
-            return typeof c["id"] === "number";
-        }
-        return typeof (<any>o).key === "number" && isServerCommand((<any>o).command);
-    }
-
-    function getPort() {
-        console.log("attempting to connect");
-        try {
-            const newPort = browser.runtime.connect();
-            console.log("created port");
-            newPort.postMessage({ event: 'loaded', url: null });
-            newPort.onMessage.addListener(message => {
-                console.log(getState(document.body));
-                if (isPortCommand(message)) {
-                    // TODO: something with command
-                    console.log("received valid command", message);
-                } else {
-                    console.error("Unable to interpret command", message);
-                }
+            let url = `/ui-state/${templateFileName}.html`;
+            let resolve: (value: Document) => void;
+            let reject: (reason: Error) => void;
+            function loadHandler(evt: Event) {
+                viewRoot.removeEventListener('load', loadHandler);
+                viewRoot.removeEventListener('error', errorHandler);
+                resolve(viewRoot.contentDocument);
+            }
+            function errorHandler(evt: ErrorEvent) {
+                viewRoot.removeEventListener('load', loadHandler);
+                viewRoot.removeEventListener('error', errorHandler);
+                reject(evt.error);
+            }
+            viewRoot.addEventListener('load', loadHandler, false);
+            viewRoot.addEventListener('error', errorHandler, false);
+            var output = new Promise<Document>((res, rej) => {
+                resolve = res;
+                reject = rej;
             });
-            newPort.onDisconnect.addListener(p => port = getPort());
-            return newPort;
-        }
-        catch (e) {
-            console.error(e);
-            debugger;
+            viewRoot.src = url;
+            return output;
         }
     }
-
-
 
     class Slider {
         constructor(el: Element) {
@@ -88,6 +61,9 @@
         public nextPage() { this.click(".handleNext"); }
         public prevPage() { this.click(".handlePrev"); }
     }
+
+
+    
     export function getState(root: HTMLElement): models.UiStateModel {
         function getStateEnum(partialState: Partial<models.UiStateModel>): models.UiState {
             if (partialState.profileSelect && partialState.profileSelect.availableProfiles) {
@@ -216,5 +192,9 @@
         output.state = getStateEnum(output);
         return output;
     }
-
+    
+    (async () => {
+        var templateDocument = await loadTemplate('details-tvshow');
+        console.log(await getState(templateDocument.body));
+    })();
 }
