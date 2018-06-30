@@ -1,7 +1,6 @@
 ﻿using JBlam.NetflixScrape.Core.Models;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -47,6 +46,8 @@ namespace JBlam.NetflixScrape.Core
                 }
                 else
                 {
+                    var ticket = c1.Deregister(command.Sequence);
+                    ticket.Resolve(command);
                 }
             }
             catch (JsonException)
@@ -55,7 +56,12 @@ namespace JBlam.NetflixScrape.Core
                 MessageError?.Invoke(this, EventArgs.Empty);
             }
         }
-
+        public async Task<Command> ExecuteCommandAsync(string action)
+        {
+            var ticket = c1.Enregister(action);
+            await messenger.SendAsync(ticket.Command.Serialise());
+            return await ticket.ResponseTask;
+        }
         public static async Task<Client> ConnectNewAsync(Uri serverUri)
         {
             var output = new Client(serverUri);
@@ -69,6 +75,33 @@ namespace JBlam.NetflixScrape.Core
 
         readonly Uri serverUri;
         readonly ClientWebSocket socket;
+        readonly CommandTicketRegister c1;
         WebsocketMessenger messenger;
+    }
+
+
+    class CommandResponseTicket
+    {
+        public CommandResponseTicket(Command command)
+        {
+            Command = command;
+        }
+        public int Sequence => Command.Sequence;
+        public Command Command { get; }
+        readonly TaskCompletionSource<Command> responseCompletionSource = new TaskCompletionSource<Command>();
+        public Task<Command> ResponseTask => responseCompletionSource.Task;
+        public void Resolve(Command response) => responseCompletionSource.SetResult(response);
+
+    }
+    class CommandTicketRegister : TicketRegister<string, CommandResponseTicket>
+    {
+        protected override CommandResponseTicket CreateTicket(string source, int sequence)
+        {
+            return new CommandResponseTicket(Command.Create(sequence, source));
+        }
+        protected override int RetrieveSequence(CommandResponseTicket ticket)
+        {
+            return ticket.Sequence;
+        }
     }
 }

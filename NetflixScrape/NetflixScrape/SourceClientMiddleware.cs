@@ -25,25 +25,23 @@ namespace JBlam.NetflixScrape.Server
             {
                 if (context.WebSockets.IsWebSocketRequest)
                 {
-                    var webSocket = await context.WebSockets.AcceptWebSocketAsync();
                     if (isSource)
                     {
                         if (clientManager.Source?.IsDisposed == false)
                         {
                             await clientManager.Source.FinishAsync();
                         }
+                        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
                         clientManager.Source = new WebsocketMessenger(webSocket);
                         await clientManager.Source.ReceiveTask;
                     }
                     if (isClient)
                     {
-                        using (var client = new WebsocketMessenger(webSocket))
-                        {
-                            clientManager.AddClient(client);
-                            await client.ReceiveTask;
-                            clientManager.RemoveClient(client);
-                        }
-
+                        var clientSocket = await context.WebSockets.AcceptWebSocketAsync();
+                        var messenger = new WebsocketMessenger(clientSocket);
+                        var ticket = clientManager.AddClient(messenger);
+                        await ticket.EndTask;
+                        await messenger.FinishAsync();
                     }
                 }
                 else
