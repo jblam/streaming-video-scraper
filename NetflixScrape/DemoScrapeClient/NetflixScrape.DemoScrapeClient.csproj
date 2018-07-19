@@ -6,6 +6,8 @@
     <LangVersion>7.1</LangVersion>
     <AssemblyName>JBlam.NetflixScrape.DemoScrapeClient</AssemblyName>
     <RootNamespace>JBlam.NetflixScrape.DemoScrapeClient</RootNamespace>
+    <StartupObject>DemoScrapeClient.Program</StartupObject>
+    <ApplicationIcon />
   </PropertyGroup>
 
   <ItemGroup>
