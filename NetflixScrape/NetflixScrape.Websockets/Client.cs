@@ -8,28 +8,19 @@ using System.Threading.Tasks;
 
 namespace JBlam.NetflixScrape.Core
 {
-    class Client
+    /// <summary>
+    /// A client which issues commands to, and observes notifications from,
+    /// a websocket server
+    /// </summary>
+    public class Client : IDisposable
     {
-        public Client(Uri serverUri)
+        /// <summary>
+        /// Creates a new instace of <see cref="Client"/>
+        /// </summary>
+        /// <param name="serverUri">The URI identifying the server</param>
+        public Client(WebsocketMessenger messenger)
         {
-            if (serverUri == null) { throw new ArgumentNullException(nameof(serverUri)); }
-            if (serverUri.Scheme != "ws") { throw new ArgumentException("URI must be a websocket URI"); }
-            this.serverUri = serverUri;
-            socket = new ClientWebSocket();
-
-            // TODO: dispose semantics
-        }
-
-        public async Task ConnectAsync()
-        {
-            // Unsure if this is an undocumented feature, but no other member of enum
-            // WebSocketState seems to describe a newly-created websocket.
-            if (socket.State != WebSocketState.None || messenger != null)
-            {
-                throw new InvalidOperationException("Connection already attempted");
-            }
-            await socket.ConnectAsync(serverUri, CancellationToken.None);
-            messenger = new WebsocketMessenger(socket);
+            this.messenger = messenger;
             messenger.MessageReceived += Messenger_MessageReceived;
         }
 
@@ -56,27 +47,62 @@ namespace JBlam.NetflixScrape.Core
                 MessageError?.Invoke(this, EventArgs.Empty);
             }
         }
+
+        /// <summary>
+        /// Asynchronously requests execution of an action, resolving with the server response
+        /// </summary>
+        /// <param name="action">The action to execute remotely</param>
+        /// <returns>A task which resovles to the server response</returns>
         public async Task<Command> ExecuteCommandAsync(string action)
         {
             var ticket = c1.Enregister(action);
             await messenger.SendAsync(ticket.Command.Serialise());
             return await ticket.ResponseTask;
         }
+
+        /// <summary>
+        /// Asynchronously connects to a server and returns an instance of <see cref="Client"/>
+        /// </summary>
+        /// <param name="serverUri">The server to connect</param>
+        /// <returns>A task resolving to a client instance</returns>
         public static async Task<Client> ConnectNewAsync(Uri serverUri)
         {
-            var output = new Client(serverUri);
-            await output.ConnectAsync();
+            if (serverUri == null) { throw new ArgumentNullException(nameof(serverUri)); }
+            if (serverUri.Scheme != "ws") { throw new ArgumentException("URI must be a websocket URI"); }
+            var socket = new ClientWebSocket();
+            await socket.ConnectAsync(serverUri, CancellationToken.None);
+
+            // TODO: right now, we're prompting the server to give us our client ID.
+            // This kinda misses the point of sockets.
+            // The server should give us the ID straight up, but we might miss the immediate message
+            // because we're connecting the socket first, then attaching a messenger.
+            // So: let's make the messenger async-attachable, and then we can ensure that we get immedately-
+            // sent messages.
+
+            var m = new WebsocketMessenger(socket);
+            var output = new Client(m);
+            var id = await output.ExecuteCommandAsync("id");
             return output;
         }
+
+        Task Dispose() => messenger.IsDisposed ? Task.CompletedTask : messenger.FinishAsync();
+        void IDisposable.Dispose()
+        {
+            Dispose();
+        }
+
+        /// <summary>
+        /// Event raised when the server sends a broadcast message
+        /// </summary>
         public event EventHandler Broadcast;
+        /// <summary>
+        /// Event raised when a server message is observed but cannot be interpreted
+        /// </summary>
         public event EventHandler MessageError;
 
-
-
-        readonly Uri serverUri;
-        readonly ClientWebSocket socket;
-        readonly CommandTicketRegister c1;
-        WebsocketMessenger messenger;
+        
+        readonly CommandTicketRegister c1 = new CommandTicketRegister();
+        readonly WebsocketMessenger messenger;
     }
 
 
@@ -95,6 +121,8 @@ namespace JBlam.NetflixScrape.Core
     }
     class CommandTicketRegister : TicketRegister<string, CommandResponseTicket>
     {
+        // TODO: set the command identifier here
+
         protected override CommandResponseTicket CreateTicket(string source, int sequence)
         {
             return new CommandResponseTicket(Command.Create(sequence, source));

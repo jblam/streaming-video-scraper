@@ -16,18 +16,14 @@ namespace DemoScrapeClient
             var portEntry = Console.ReadLine();
             if (int.TryParse(portEntry, out var port))
             {
-                using (var socket = new ClientWebSocket())
+                using (var c = await Client.ConnectNewAsync(new Uri($"ws://localhost:{port}/ws")))
                 {
-                    await socket.ConnectAsync(new Uri($"ws://localhost:{port}/ws"), CancellationToken.None);
-                    using (var messenger = new WebsocketMessenger(socket))
+                    c.Broadcast += (sender, e) => Console.WriteLine("New broadcast: {0}", e);
+                    c.MessageError += (sender, e) => Console.WriteLine("Say what now?! {0}", e);
+                    string nextLine;
+                    while (!String.IsNullOrEmpty(nextLine = Console.ReadLine()))
                     {
-                        messenger.MessageReceived += Messenger_MessageReceived;
-
-                        string nextLine;
-                        while (!String.IsNullOrEmpty(nextLine = Console.ReadLine()))
-                        {
-                            await messenger.SendAsync(nextLine);
-                        }
+                        await c.ExecuteCommandAsync(nextLine);
                     }
                 }
             }
@@ -36,11 +32,6 @@ namespace DemoScrapeClient
                 Console.WriteLine($"{portEntry} is not an integer. Better luck next time");
             }
             ;
-        }
-
-        private static void Messenger_MessageReceived(object sender, WebsocketReceiveEventArgs e)
-        {
-            Console.WriteLine("Received: {0}", e.Message);
         }
     }
 }
