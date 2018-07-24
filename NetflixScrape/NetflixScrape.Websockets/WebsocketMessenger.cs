@@ -60,7 +60,7 @@ namespace JBlam.NetflixScrape.Core
             {
                 var nextMessage = await socket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), tokenSource.Token);
                 var messageEventArgs = new WebsocketReceiveEventArgs(encoding.GetString(receiveBuffer, 0, nextMessage.Count));
-                SendOrBuffer(messageEventArgs);
+                messageEventSource.SendOrBuffer(this, messageEventArgs);
                 if (nextMessage.CloseStatus.HasValue)
                 {
                     tokenSource.Cancel();
@@ -68,35 +68,15 @@ namespace JBlam.NetflixScrape.Core
             }
         }
 
-        readonly Queue<WebsocketReceiveEventArgs> buffer = new Queue<WebsocketReceiveEventArgs>();
-        void SendOrBuffer(WebsocketReceiveEventArgs args)
-        {
-            var evt = messageReceived;
-            if (evt == null)
-            {
-                buffer.Enqueue(args);
-            }
-            else
-            {
-                evt(this, args);
-            }
-        }
+        readonly BufferedEventSource<WebsocketReceiveEventArgs> messageEventSource = new BufferedEventSource<WebsocketReceiveEventArgs>();
         /// <summary>
         /// Event raised when the messager receives a message
         /// </summary>
         public event EventHandler<WebsocketReceiveEventArgs> MessageReceived
         {
-            add
-            {
-                messageReceived += value;
-                while (buffer.Any())
-                {
-                    value(this, buffer.Dequeue());
-                }
-            }
-            remove { messageReceived -= value; }
+            add => messageEventSource.Event += value;
+            remove => messageEventSource.Event -= value;
         }
-        event EventHandler<WebsocketReceiveEventArgs> messageReceived;
 
         /// <summary>
         /// Asynchronously wait for any outgoing messages, then disposes the messanger and the underlying socket
