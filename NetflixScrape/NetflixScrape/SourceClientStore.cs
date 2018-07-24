@@ -32,16 +32,14 @@ namespace JBlam.NetflixScrape.Server
 
         readonly ClientRegister clientRegister = new ClientRegister();
 
-        public ClientTicket AddClient(WebsocketMessenger messenger)
+        public async Task<ClientTicket> AddClient(WebsocketMessenger messenger)
         {
             var ticket = clientRegister.Enregister(messenger);
-            ticket.EndTask.ContinueWith(task =>
-            {
-                clientRegister.Deregister(ticket);
-            });
             ticket.MessageReceived += Client_MessageReceived;
+            await messenger.SendAsync(ticket.Sequence.ToString());
             return ticket;
         }
+        public void Deregister(ClientTicket ticket) => clientRegister.Deregister(ticket);
 
         IReadOnlyCollection<ClientTicket> Clients => throw new NotImplementedException("Somehow enumerate all the clients in the dictionary without throwing if collection mutated");
 
@@ -52,13 +50,21 @@ namespace JBlam.NetflixScrape.Server
             Console.WriteLine(e.Message);
         }
 
-        private async void Client_MessageReceived(object sender, EventArgs e)
+        private async void Client_MessageReceived(object sender, TicketCommandEventArgs e)
         {
-            Command message;
-            throw new NotImplementedException("Get message from eventargs");
-            string json = null;
-            throw new NotImplementedException("Serialise message");
-            await Source.SendAsync(json);
+            bool shouldPassOnToExtension = default(bool?) ?? throw new NotImplementedException();
+            if (shouldPassOnToExtension)
+            {
+                Task<object> extensionResponse = (Task<object>)null ?? throw new NotImplementedException("Send to extension");
+                var response = await extensionResponse;
+                await (sender as ClientTicket).SendIfRelevantAsync(response.Serialise());
+            }
+            else
+            {
+                throw new NotImplementedException("Decide what to do");
+                throw new NotImplementedException("Do that thing");
+                throw new NotImplementedException("Respond?");
+            }
         }
     }
     public class ClientTicket
@@ -71,13 +77,18 @@ namespace JBlam.NetflixScrape.Server
         }
         readonly WebsocketMessenger messenger;
         public int Sequence { get; }
-        void RaiseMessageReceived(string message)
+        async void RaiseMessageReceived(string message)
         {
-            Command incomingCommand;
-            throw new NotImplementedException("Handle incoming message and deserialise");
-            var outgoingCommand = incomingCommand.WithClientIdentifier(Sequence);
-            throw new NotImplementedException("Define handler type");
-            MessageReceived?.Invoke(this, EventArgs.Empty);
+            try
+            {
+                var incomingCommand = JsonConvert.DeserializeObject<Command>(message);
+                MessageReceived?.Invoke(this, new TicketCommandEventArgs(incomingCommand));
+            }
+            catch (JsonException)
+            {
+                string s = (string)null ?? throw new NotImplementedException("Define 'error' response type");
+                await messenger.SendAsync(s);
+            }
         }
         public Task SendIfRelevantAsync(string message)
         {
@@ -85,10 +96,23 @@ namespace JBlam.NetflixScrape.Server
             return messenger.SendAsync(message);
         }
         public Task EndTask => messenger.ReceiveTask;
-        public event EventHandler MessageReceived;
+        public event EventHandler<TicketCommandEventArgs> MessageReceived;
+    }
+    public class TicketCommandEventArgs : EventArgs
+    {
+        public TicketCommandEventArgs(Command command)
+        {
+            Command = command;
+        }
+        public Command Command { get; }
     }
     class ClientRegister : TicketRegister<WebsocketMessenger, ClientTicket>
     {
+        public ClientRegister()
+            : base(1)
+        {
+            // ensure that clients start from `1` to reserve `0` for future use
+        }
         protected override ClientTicket CreateTicket(WebsocketMessenger source, int sequence) => new ClientTicket(source, sequence);
 
         protected override int RetrieveSequence(ClientTicket ticket) => ticket.Sequence;

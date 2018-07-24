@@ -12,6 +12,17 @@ namespace JBlam.NetflixScrape.Core
     /// <typeparam name="TTicket">The ticket wrapping the data</typeparam>
     public abstract class TicketRegister<TInput, TTicket> : IDisposable
     {
+        protected TicketRegister()
+            : this(0)
+        {
+
+        }
+
+        protected TicketRegister(int initialSequence)
+        {
+            sequence = initialSequence;
+        }
+
         int sequence;
         Dictionary<int, TTicket> inner = new Dictionary<int, TTicket>();
         /// <summary>

@@ -18,12 +18,15 @@ namespace JBlam.NetflixScrape.Core
         /// Creates a new instace of <see cref="Client"/>
         /// </summary>
         /// <param name="serverUri">The URI identifying the server</param>
-        public Client(WebsocketMessenger messenger)
+        Client(WebsocketMessenger messenger, int clientId)
         {
             this.messenger = messenger;
+            ticketRegister = new CommandTicketRegister(clientId);
             messenger.MessageReceived += Messenger_MessageReceived;
-            messenger.ReceiveTask.ContinueWith(t => c1.Dispose());
+            messenger.ReceiveTask.ContinueWith(t => ticketRegister.Dispose());
         }
+
+        public int ClientId => ticketRegister.ClientId;
 
         private void Messenger_MessageReceived(object sender, WebsocketReceiveEventArgs e)
         {
@@ -38,7 +41,7 @@ namespace JBlam.NetflixScrape.Core
                 }
                 else
                 {
-                    var ticket = c1.Deregister(command.Sequence);
+                    var ticket = ticketRegister.Deregister(command.Sequence);
                     ticket.ResponseCompletionSource.SetResult(command);
                 }
             }
@@ -56,7 +59,7 @@ namespace JBlam.NetflixScrape.Core
         /// <returns>A task which resovles to the server response</returns>
         public async Task<Command> ExecuteCommandAsync(string action)
         {
-            var ticket = c1.Enregister(action);
+            var ticket = ticketRegister.Enregister(action);
             await messenger.SendAsync(ticket.Command.Serialise());
             return await ticket.ResponseCompletionSource.Task;
         }
@@ -80,9 +83,23 @@ namespace JBlam.NetflixScrape.Core
             // So: let's make the messenger async-attachable, and then we can ensure that we get immedately-
             // sent messages.
 
+            var clientIdCompletionSource = new TaskCompletionSource<int>();
+            void Messenger_FirstMessage(object sender, WebsocketReceiveEventArgs args)
+            {
+                ((WebsocketMessenger)sender).MessageReceived -= Messenger_FirstMessage;
+                try
+                {
+                    clientIdCompletionSource.SetResult(int.Parse(args.Message));
+                }
+                catch (Exception ex)
+                {
+                    clientIdCompletionSource.SetException(ex);
+                }
+            }
             var m = new WebsocketMessenger(socket);
-            var output = new Client(m);
-            var id = await output.ExecuteCommandAsync("id");
+            m.MessageReceived += Messenger_FirstMessage;
+
+            var output = new Client(m, await clientIdCompletionSource.Task);
             return output;
         }
 
@@ -103,7 +120,7 @@ namespace JBlam.NetflixScrape.Core
         public event EventHandler MessageError;
 
         
-        readonly CommandTicketRegister c1 = new CommandTicketRegister();
+        readonly CommandTicketRegister ticketRegister;
         readonly WebsocketMessenger messenger;
     }
 
@@ -120,11 +137,15 @@ namespace JBlam.NetflixScrape.Core
     }
     class CommandTicketRegister : TicketRegister<string, CommandResponseTicket>
     {
-        // TODO: set the command identifier here
+        public CommandTicketRegister(int clientId)
+        {
+            ClientId = clientId;
+        }
 
+        public int ClientId { get; }
         protected override CommandResponseTicket CreateTicket(string source, int sequence)
         {
-            return new CommandResponseTicket(Command.Create(sequence, source));
+            return new CommandResponseTicket(Command.Create(sequence, source).WithClientIdentifier(ClientId));
         }
         protected override int RetrieveSequence(CommandResponseTicket ticket)
         {

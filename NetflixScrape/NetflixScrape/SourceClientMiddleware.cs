@@ -39,9 +39,16 @@ namespace JBlam.NetflixScrape.Server
                     {
                         var clientSocket = await context.WebSockets.AcceptWebSocketAsync();
                         var messenger = new WebsocketMessenger(clientSocket);
-                        var ticket = clientManager.AddClient(messenger);
-                        await ticket.EndTask;
-                        await messenger.FinishAsync();
+                        var ticket = await clientManager.AddClient(messenger);
+                        try
+                        {
+                            await ticket.EndTask;
+                        }
+                        finally
+                        {
+                            clientManager.Deregister(ticket);
+                            await messenger.FinishAsync();
+                        }
                     }
                 }
                 else
