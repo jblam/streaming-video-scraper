@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace JBlam.NetflixScrape.Core
 {
@@ -9,7 +10,7 @@ namespace JBlam.NetflixScrape.Core
     /// </summary>
     /// <typeparam name="TInput">The data which is uniquely identified by the ticket</typeparam>
     /// <typeparam name="TTicket">The ticket wrapping the data</typeparam>
-    public abstract class TicketRegister<TInput, TTicket>
+    public abstract class TicketRegister<TInput, TTicket> : IDisposable
     {
         int sequence;
         Dictionary<int, TTicket> inner = new Dictionary<int, TTicket>();
@@ -20,6 +21,7 @@ namespace JBlam.NetflixScrape.Core
         /// <returns>A ticket beaing a unique identifier</returns>
         public TTicket Enregister(TInput source)
         {
+            if (isDisposed) { throw new ObjectDisposedException(nameof(TicketRegister<TInput, TTicket>)); }
             lock (inner)
             {
                 var ticket = CreateTicket(source, sequence);
@@ -72,5 +74,41 @@ namespace JBlam.NetflixScrape.Core
         /// <param name="ticket">The ticket instance bearing a sequence identifier</param>
         /// <returns>The sequence identifier member of the ticket</returns>
         protected abstract int RetrieveSequence(TTicket ticket);
+
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+        private bool isDisposed = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            isDisposed = true;
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    foreach (var ticket in inner.Values)
+                    {
+                        DisposeTicket(ticket);
+                    }
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        /// <summary>
+        /// When overridden in a derived class, disposes of the ticket instance
+        /// </summary>
+        /// <param name="ticket"></param>
+        protected virtual void DisposeTicket(TTicket ticket) { }
+
+        /// <summary>
+        /// Disposes the ticket register by preventing additional registrations, and disposing any outstanding tickets
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
     }
 }

@@ -22,6 +22,7 @@ namespace JBlam.NetflixScrape.Core
         {
             this.messenger = messenger;
             messenger.MessageReceived += Messenger_MessageReceived;
+            messenger.ReceiveTask.ContinueWith(t => c1.Dispose());
         }
 
         private void Messenger_MessageReceived(object sender, WebsocketReceiveEventArgs e)
@@ -38,7 +39,7 @@ namespace JBlam.NetflixScrape.Core
                 else
                 {
                     var ticket = c1.Deregister(command.Sequence);
-                    ticket.Resolve(command);
+                    ticket.ResponseCompletionSource.SetResult(command);
                 }
             }
             catch (JsonException)
@@ -57,7 +58,7 @@ namespace JBlam.NetflixScrape.Core
         {
             var ticket = c1.Enregister(action);
             await messenger.SendAsync(ticket.Command.Serialise());
-            return await ticket.ResponseTask;
+            return await ticket.ResponseCompletionSource.Task;
         }
 
         /// <summary>
@@ -90,6 +91,7 @@ namespace JBlam.NetflixScrape.Core
         {
             Dispose();
         }
+        public Task LifetimeTask => messenger.ReceiveTask;
 
         /// <summary>
         /// Event raised when the server sends a broadcast message
@@ -114,10 +116,7 @@ namespace JBlam.NetflixScrape.Core
         }
         public int Sequence => Command.Sequence;
         public Command Command { get; }
-        readonly TaskCompletionSource<Command> responseCompletionSource = new TaskCompletionSource<Command>();
-        public Task<Command> ResponseTask => responseCompletionSource.Task;
-        public void Resolve(Command response) => responseCompletionSource.SetResult(response);
-
+        public TaskCompletionSource<Command> ResponseCompletionSource { get; } = new TaskCompletionSource<Command>();
     }
     class CommandTicketRegister : TicketRegister<string, CommandResponseTicket>
     {
@@ -130,6 +129,12 @@ namespace JBlam.NetflixScrape.Core
         protected override int RetrieveSequence(CommandResponseTicket ticket)
         {
             return ticket.Sequence;
+        }
+
+        protected override void DisposeTicket(CommandResponseTicket ticket)
+        {
+            base.DisposeTicket(ticket);
+            ticket.ResponseCompletionSource.SetCanceled();
         }
     }
 }

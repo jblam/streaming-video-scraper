@@ -20,10 +20,24 @@ namespace DemoScrapeClient
                 {
                     c.Broadcast += (sender, e) => Console.WriteLine("New broadcast: {0}", e);
                     c.MessageError += (sender, e) => Console.WriteLine("Say what now?! {0}", e);
-                    string nextLine;
-                    while (!String.IsNullOrEmpty(nextLine = Console.ReadLine()))
+                    try
                     {
-                        await c.ExecuteCommandAsync(nextLine);
+                        while (true)
+                        {
+                            var readLine = Console.ReadLine();
+                            if (string.IsNullOrEmpty(readLine))
+                            {
+                                Console.WriteLine("Quitting.");
+                            }
+                            await c.ExecuteCommandAsync(readLine);
+                        }
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // the task will be cancelled if the server gets closed while waiting on the task
+                        // in this case, we can just re-enter the loop.
+                        Console.WriteLine("Remote server closed connection. Goodbye.");
+                        return;
                     }
                 }
             }
@@ -31,7 +45,6 @@ namespace DemoScrapeClient
             {
                 Console.WriteLine($"{portEntry} is not an integer. Better luck next time");
             }
-            ;
         }
     }
 }
