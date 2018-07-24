@@ -50,6 +50,28 @@ namespace JBlam.NetflixScrape.Server
             Console.WriteLine(e.Message);
         }
 
+        #region stuff to move out of here
+#warning This is all in the wrong spot
+        class Response
+        {
+            public static Response UnrecognisedCommandResponse(Command command) => throw new NotImplementedException();
+            public static Response AcknowledgeCommandResponse(Command command) => throw new NotImplementedException();
+            public Response(Command command, object data)
+            {
+                throw new NotImplementedException();
+            }
+        }
+        class CommandProcessor
+        {
+            public async Task<Response> ProcessAsync(Command c)
+            {
+                if (!IsRecognisedCommand(c)) { return Response.UnrecognisedCommandResponse(c); }
+                throw new NotImplementedException();
+            }
+            bool IsRecognisedCommand(Command c) => throw new NotImplementedException();
+        }
+        #endregion
+
         private async void Client_MessageReceived(object sender, TicketCommandEventArgs e)
         {
             bool shouldPassOnToExtension = default(bool?) ?? throw new NotImplementedException();
