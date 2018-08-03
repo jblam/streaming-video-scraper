@@ -101,3 +101,102 @@ The response format is generally the same as that for the *Internal representati
 
 - the `client` identifier may be transmitted, but should not be expected
 - if the response is a broadcast response, the `sequence` identifer will be set to the reserved sequence identifier `0`, which signifies to the client that the response does not correspond to any command issued by that client.
+
+## Available commands
+
+Use-cases:
+
+1. select "Mr Fluffy The Cat" from the profile-select screen (`sel "Mr Fluffy The Cat"`)
+   - *TODO: what about auto-selecting it?*
+1. d-pad movement (`nav up`, `nav right`)
+1. expose "my list" (`jump "my list"`)
+1. play the thing that's currently highlighed (`sel`)
+1. "enter" the highlighted thing (`jump "thing"`, `nav in`)
+1. go to the "episodes" tab (`sel "episodes"`)
+1. drop the "season" drop-down (`sel "season"`)
+1. pick season 3 (`sel "season 3"`)
+1. scroll sideways past the edge of a multi-page horizontal list (keep hitting `nav right`)
+1. stop loading the page (`cancel`)
+1. reload the page (`reload`)
+
+### Session management
+
+`browse`
+
+Launches the system's web browser
+
+`close`
+
+Closes the active tab or browser window
+
+`cancel`
+
+Hits the ESC key
+
+`reload`
+
+Hits the F5 key
+
+### Navigation
+
+Navigation commands are always acknowledged. If they mutate the state, the state change
+is broadcast separately.
+
+*TODO: can we nack if the page is loading?*
+
+`nav: up|down|left|right|in|out`
+
+Navigates in a direction. The host may interpret relative movement
+depending on the current state.
+
+
+`sel: [identifier?]`
+
+Activates the identified object if sepecified, or otherwise the current selection.
+Morally-equivalent to mouse left-click.
+
+`jump: [identifier]`
+
+Moves the selection to the element corresponding to the identifier.
+
+### Querying commands
+
+`info: [identifier?]`
+
+Provides "contents" information on the identified object or current selection. For example,
+exposing a "react-ish" dropdown. Does not ack/nack until the host-state is ready. Mutates state.
+
+`state`
+
+Requests the current state. Does not ack/nack until the host page is ready to provide state, if loading.
+
+### Mouse
+
+Mouse controls provided as a general fallback/workaround if the state-management part doesn't
+handle a particular use-case.
+
+`mmov: [delta_x], [delta_y]`
+
+Moves the mouse by the specified offset
+
+`mset: [x], [y]`
+
+Moves the mouse to the specified location
+
+`click: left|right`
+
+Clicks the specified button
+
+`wheel: up|down [clicks=1]`
+
+Moves the mouse-wheel by the specified amount of clicks in the selected direction
+
+### Playback
+
+`pause`
+
+`play`
+
+`skip: [sec=+10]`
+
+*TODO: chapters?*
