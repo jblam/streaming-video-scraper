@@ -1,6 +1,7 @@
 ﻿using JBlam.NetflixScrape.Core.Models;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -21,19 +22,19 @@ namespace JBlam.NetflixScrape.Core
         Client(WebsocketMessenger messenger, int clientId)
         {
             this.messenger = messenger;
-            ticketRegister = new CommandTicketRegister(clientId);
+            this.commandBuilder = new Commando.Builder(clientId);
             messenger.MessageReceived += Messenger_MessageReceived;
-            messenger.ReceiveTask.ContinueWith(t => ticketRegister.Dispose());
         }
 
-        public int ClientId => ticketRegister.ClientId;
+        readonly Commando.Builder commandBuilder;
+        readonly ConcurrentDictionary<int, TaskCompletionSource<bool>> commandCompletionSources = new ConcurrentDictionary<int, TaskCompletionSource<bool>>();
 
         private void Messenger_MessageReceived(object sender, WebsocketReceiveEventArgs e)
         {
             try
             {
                 // TODO: type is response, not command
-                var command = JsonConvert.DeserializeObject<Command>(e.Message);
+                var command = Commando.Parse(e.Message);
                 if (command.Sequence == 0)
                 {
                     // TODO: message type
@@ -41,8 +42,15 @@ namespace JBlam.NetflixScrape.Core
                 }
                 else
                 {
-                    var ticket = ticketRegister.Deregister(command.Sequence);
-                    ticket.ResponseCompletionSource.SetResult(command);
+                    if (commandCompletionSources.TryRemove(command.Sequence, out var tcs))
+                    {
+                        // TODO: outcome
+                        tcs.TrySetResult(true);
+                    }
+                    else
+                    {
+                        // TODO: desync? throw?
+                    }
                 }
             }
             catch (JsonException)
@@ -50,18 +58,29 @@ namespace JBlam.NetflixScrape.Core
                 // TODO: design event args type
                 MessageError?.Invoke(this, EventArgs.Empty);
             }
+            catch (FormatException)
+            {
+                MessageError?.Invoke(this, EventArgs.Empty);
+            }
         }
-
-        /// <summary>
-        /// Asynchronously requests execution of an action, resolving with the server response
-        /// </summary>
-        /// <param name="action">The action to execute remotely</param>
-        /// <returns>A task which resovles to the server response</returns>
-        public async Task<Command> ExecuteCommandAsync(string action)
+        
+        async Task<bool> ExecuteCommandAsync(Commando command)
         {
-            var ticket = ticketRegister.Enregister(action);
-            await messenger.SendAsync(ticket.Command.Serialise());
-            return await ticket.ResponseCompletionSource.Task;
+            var tcs = new TaskCompletionSource<bool>();
+            if (!commandCompletionSources.TryAdd(command.Sequence, tcs))
+            {
+                throw new ArgumentException("Attempted to add a duplicate command");
+            }
+            try
+            {
+                await messenger.SendAsync(command.ToString()).ConfigureAwait(false);
+            }
+            catch
+            {
+                commandCompletionSources.TryRemove(command.Sequence, out _);
+                throw;
+            }
+            return await tcs.Task.ConfigureAwait(false);
         }
 
         /// <summary>
@@ -74,8 +93,14 @@ namespace JBlam.NetflixScrape.Core
             if (serverUri == null) { throw new ArgumentNullException(nameof(serverUri)); }
             if (serverUri.Scheme != "ws") { throw new ArgumentException("URI must be a websocket URI"); }
             var socket = new ClientWebSocket();
-            await socket.ConnectAsync(serverUri, CancellationToken.None);
-
+            try
+            {
+                await socket.ConnectAsync(serverUri, CancellationToken.None);
+            }
+            catch
+            {
+                ;
+            }
             // TODO: right now, we're prompting the server to give us our client ID.
             // This kinda misses the point of sockets.
             // The server should give us the ID straight up, but we might miss the immediate message
@@ -118,44 +143,7 @@ namespace JBlam.NetflixScrape.Core
         /// Event raised when a server message is observed but cannot be interpreted
         /// </summary>
         public event EventHandler MessageError;
-
         
-        readonly CommandTicketRegister ticketRegister;
         readonly WebsocketMessenger messenger;
-    }
-
-
-    class CommandResponseTicket
-    {
-        public CommandResponseTicket(Command command)
-        {
-            Command = command;
-        }
-        public int Sequence => Command.Sequence;
-        public Command Command { get; }
-        public TaskCompletionSource<Command> ResponseCompletionSource { get; } = new TaskCompletionSource<Command>();
-    }
-    class CommandTicketRegister : TicketRegister<string, CommandResponseTicket>
-    {
-        public CommandTicketRegister(int clientId)
-        {
-            ClientId = clientId;
-        }
-
-        public int ClientId { get; }
-        protected override CommandResponseTicket CreateTicket(string source, int sequence)
-        {
-            return new CommandResponseTicket(Command.Create(sequence, source).WithClientIdentifier(ClientId));
-        }
-        protected override int RetrieveSequence(CommandResponseTicket ticket)
-        {
-            return ticket.Sequence;
-        }
-
-        protected override void DisposeTicket(CommandResponseTicket ticket)
-        {
-            base.DisposeTicket(ticket);
-            ticket.ResponseCompletionSource.SetCanceled();
-        }
     }
 }

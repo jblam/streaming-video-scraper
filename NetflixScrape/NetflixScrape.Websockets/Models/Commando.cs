@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 namespace JBlam.NetflixScrape.Core.Models
 {
@@ -7,11 +8,15 @@ namespace JBlam.NetflixScrape.Core.Models
         // TODO: consider making everything bool TryGetXYZ(out T xyz);
         // TODO: add source/sequence
 
-        Commando(CommandAction action, string parameter)
+        Commando(int source, int sequence, CommandAction action, string parameter)
         {
+            Source = source;
+            Sequence = sequence;
             Action = action;
             this.parameter = parameter;
         }
+        public int Source { get; }
+        public int Sequence { get; }
         public CommandAction Action { get; }
         readonly string parameter;
         (string first, string second) GetParamTokens()
@@ -59,23 +64,32 @@ namespace JBlam.NetflixScrape.Core.Models
         public string GetString() => parameter ?? throw new MalformedCommandException(this);
 
         public override string ToString() => parameter == null
-            ? Action.ToString()
-            : Action.ToString() + " " + parameter.ToString();
+            ? $"{Source} {Sequence} {Action}"
+            : $"{Source} {Sequence} {Action} {parameter}";
 
         public static Commando Parse(string serialisedForm)
         {
-            if (serialisedForm == null) { throw new ArgumentNullException(nameof(serialisedForm)); }
-            if (serialisedForm.Length > 100) { throw new ArgumentException("Input too long"); }
-            var separatorIndex = serialisedForm.IndexOf(' ');
-            var actionString = separatorIndex < 0 ? serialisedForm : serialisedForm.Substring(0, separatorIndex);
-            var paramString = separatorIndex < 0
-                ? null
-                : serialisedForm.Substring(separatorIndex + 1, serialisedForm.Length - separatorIndex - 1);
-            if (Enum.TryParse<CommandAction>(actionString, out var action))
+            // COMMANDO = SOURCE SPACE SEQUENCE SPACE ACTION [ SPACE ARGUMENT ]
+            // SOURCE = [0-9]+
+            // SEQUENCE = [0-9]+
+            // SPACE = ' '
+            // ACTION = [A-Za-z]+
+            // ARGUMENT = [A-Za-z]+
+            var tokens = serialisedForm.Split(new[] { ' ' }, 4);
+            string argument;
+            if (tokens.Length < 3)
             {
-                return new Commando(action, paramString);
+                throw new FormatException();
             }
-            return default(Commando);
+            else if (tokens.Length == 3)
+            {
+                argument = null;
+            }
+            else
+            {
+                argument = tokens[3];
+            }
+            return new Commando(int.Parse(tokens[0]), int.Parse(tokens[1]), (CommandAction)Enum.Parse(typeof(CommandAction), tokens[2]), argument);
         }
 
         enum Parameterness
@@ -131,20 +145,37 @@ namespace JBlam.NetflixScrape.Core.Models
             }
         }
         
-        public static Commando Create(CommandAction action) => IsCompatible(GetParamaterness(action))
-            ? new Commando(action, null)
-            : throw new ArgumentException("Action requires a parameter");
-        public static Commando Create<T>(CommandAction action, T parameter) => IsCompatible(GetParamaterness(action), parameter)
-            ? new Commando(action, parameter.ToString())
-            : throw new ArgumentException("Action cannot take a parameter");
-        public static Commando Create<T>(CommandAction action, T parameter, int quantity) => IsCompatible(GetParamaterness(action), parameter, quantity)
-            ? new Commando(action, $"{parameter},{quantity}")
-            : throw new ArgumentException("Action cannot take a parameter and an integer");
-        public static Commando Create(CommandAction action, int x, int y) => IsCompatible(GetParamaterness(action), x, y)
-            ? new Commando(action, $"{x},{y}")
-            : throw new ArgumentException("Action cannot take two integers");
-        public static Commando Create(CommandAction action, string s) => IsCompatible(GetParamaterness(action), s)
-            ? new Commando(action, s)
-            : throw new ArgumentException("Action cannot take a string");
+
+        public class Builder
+        {
+            public Builder(int sourceIdentifier)
+            {
+                this.sourceIdentifier = sourceIdentifier;
+            }
+            readonly int sourceIdentifier;
+            // First-returned sequence identifier should be 0.
+            int sequenceIdentifier = -1;
+            int NextSequence() => Interlocked.Add(ref sequenceIdentifier, 1);
+
+            public Commando Create(CommandAction action) => IsCompatible(GetParamaterness(action))
+                ? new Commando(sourceIdentifier, NextSequence(), action, null)
+                : throw new ArgumentException("Action requires a parameter");
+
+            public Commando Create<T>(CommandAction action, T parameter) => IsCompatible(GetParamaterness(action), parameter)
+                ? new Commando(sourceIdentifier, NextSequence(), action, parameter.ToString())
+                : throw new ArgumentException("Action cannot take a parameter");
+
+            public Commando Create<T>(CommandAction action, T parameter, int quantity) => IsCompatible(GetParamaterness(action), parameter, quantity)
+                ? new Commando(sourceIdentifier, NextSequence(), action, $"{parameter},{quantity}")
+                : throw new ArgumentException("Action cannot take a parameter and an integer");
+
+            public Commando Create(CommandAction action, int x, int y) => IsCompatible(GetParamaterness(action), x, y)
+                ? new Commando(sourceIdentifier, NextSequence(), action, $"{x},{y}")
+                : throw new ArgumentException("Action cannot take two integers");
+
+            public Commando Create(CommandAction action, string s) => IsCompatible(GetParamaterness(action), s)
+                ? new Commando(sourceIdentifier, NextSequence(), action, s)
+                : throw new ArgumentException("Action cannot take a string");
+        }
     }
 }

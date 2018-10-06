@@ -8,18 +8,20 @@ namespace JBlam.NetflixScrape.DemoScrapeClient
 {
     public class CommandSerialisationTests
     {
+        readonly Commando.Builder builder = new Commando.Builder(0);
+
         [Fact]
         public void CanSerialiseCommand()
         {
-            var c = Commando.Create(CommandAction.Unidentified);
+            var c = builder.Create(CommandAction.Unidentified);
             var serialised = c.ToString();
-            Assert.Equal("Unidentified", serialised);
+            Assert.Equal("0 0 Unidentified", serialised);
         }
 
         [Fact]
         public void CanDeserialiseCommand()
         {
-            var serialised = "Unidentified";
+            var serialised = "0 0 Unidentified";
             var c = Commando.Parse(serialised);
             Assert.Equal(CommandAction.Unidentified, c.Action);
         }
@@ -27,15 +29,15 @@ namespace JBlam.NetflixScrape.DemoScrapeClient
         [Fact]
         public void CanSerialiseParamterCommand()
         {
-            var c = Commando.Create(CommandAction.MouseMove, 1, 1);
+            var c = builder.Create(CommandAction.MouseMove, 1, 1);
             var serialsed = c.ToString();
-            Assert.Equal("MouseMove 1,1", serialsed);
+            Assert.Equal("0 0 MouseMove 1,1", serialsed);
         }
 
         [Fact]
         public void CanDeserialiseIntPairCommand()
         {
-            var serialised = "MouseMove 10,11";
+            var serialised = "0 0 MouseMove 10,11";
             var c = Commando.Parse(serialised);
             Assert.Equal((10, 11), c.GetInts());
         }

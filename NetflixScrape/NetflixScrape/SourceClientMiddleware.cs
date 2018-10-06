@@ -15,7 +15,7 @@ namespace JBlam.NetflixScrape.Server
             this.next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context, SourceClientStore clientManager)
+        public async Task InvokeAsync(HttpContext context, SourceClientStore clientManager, CommandProcessor commandProcessor)
         {
 
             var isSource = context.Request.Path == "/ws-source";

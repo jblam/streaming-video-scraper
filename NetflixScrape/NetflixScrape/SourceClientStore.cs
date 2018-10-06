@@ -54,21 +54,21 @@ namespace JBlam.NetflixScrape.Server
 #warning This is all in the wrong spot
         class Response
         {
-            public static Response UnrecognisedCommandResponse(Command command) => throw new NotImplementedException();
-            public static Response AcknowledgeCommandResponse(Command command) => throw new NotImplementedException();
-            public Response(Command command, object data)
+            public static Response UnrecognisedCommandResponse(Commando command) => throw new NotImplementedException();
+            public static Response AcknowledgeCommandResponse(Commando command) => throw new NotImplementedException();
+            public Response(Commando command, object data)
             {
                 throw new NotImplementedException();
             }
         }
         class CommandProcessor
         {
-            public async Task<Response> ProcessAsync(Command c)
+            public async Task<Response> ProcessAsync(Commando c)
             {
                 if (!IsRecognisedCommand(c)) { return Response.UnrecognisedCommandResponse(c); }
                 throw new NotImplementedException();
             }
-            bool IsRecognisedCommand(Command c) => throw new NotImplementedException();
+            bool IsRecognisedCommand(Commando c) => throw new NotImplementedException();
         }
         #endregion
 
@@ -103,7 +103,7 @@ namespace JBlam.NetflixScrape.Server
         {
             try
             {
-                var incomingCommand = JsonConvert.DeserializeObject<Command>(message);
+                var incomingCommand = JsonConvert.DeserializeObject<Commando>(message);
                 MessageReceived?.Invoke(this, new TicketCommandEventArgs(incomingCommand));
             }
             catch (JsonException)
@@ -122,11 +122,11 @@ namespace JBlam.NetflixScrape.Server
     }
     public class TicketCommandEventArgs : EventArgs
     {
-        public TicketCommandEventArgs(Command command)
+        public TicketCommandEventArgs(Commando command)
         {
             Command = command;
         }
-        public Command Command { get; }
+        public Commando Command { get; }
     }
     class ClientRegister : TicketRegister<WebsocketMessenger, ClientTicket>
     {
