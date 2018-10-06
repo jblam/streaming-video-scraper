@@ -67,7 +67,7 @@ namespace JBlam.NetflixScrape.Core.Models
             ? $"{Source} {Sequence} {Action}"
             : $"{Source} {Sequence} {Action} {parameter}";
 
-        public static Commando Parse(string serialisedForm)
+        public static bool TryParse(string serialisedForm, out Commando command)
         {
             // COMMANDO = SOURCE SPACE SEQUENCE SPACE ACTION [ SPACE ARGUMENT ]
             // SOURCE = [0-9]+
@@ -79,7 +79,8 @@ namespace JBlam.NetflixScrape.Core.Models
             string argument;
             if (tokens.Length < 3)
             {
-                throw new FormatException();
+                command = default(Commando);
+                return false;
             }
             else if (tokens.Length == 3)
             {
@@ -89,8 +90,10 @@ namespace JBlam.NetflixScrape.Core.Models
             {
                 argument = tokens[3];
             }
-            return new Commando(int.Parse(tokens[0]), int.Parse(tokens[1]), (CommandAction)Enum.Parse(typeof(CommandAction), tokens[2]), argument);
+            command = new Commando(int.Parse(tokens[0]), int.Parse(tokens[1]), (CommandAction)Enum.Parse(typeof(CommandAction), tokens[2]), argument);
+            return true;
         }
+        public static Commando Parse(string serialisedForm) => TryParse(serialisedForm, out var command) ? command : throw new FormatException();
 
         enum Parameterness
         {

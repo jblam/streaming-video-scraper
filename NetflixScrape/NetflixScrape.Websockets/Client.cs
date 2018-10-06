@@ -27,25 +27,25 @@ namespace JBlam.NetflixScrape.Core
         }
 
         readonly Commando.Builder commandBuilder;
-        readonly ConcurrentDictionary<int, TaskCompletionSource<bool>> commandCompletionSources = new ConcurrentDictionary<int, TaskCompletionSource<bool>>();
+        readonly ConcurrentDictionary<int, TaskCompletionSource<Responseo>> commandCompletionSources = new ConcurrentDictionary<int, TaskCompletionSource<Responseo>>();
 
         private void Messenger_MessageReceived(object sender, WebsocketReceiveEventArgs e)
         {
             try
             {
                 // TODO: type is response, not command
-                var command = Commando.Parse(e.Message);
-                if (command.Sequence == 0)
+                var response = Responseo.Parse(e.Message);
+                if (response.Sequence == 0)
                 {
                     // TODO: message type
                     Broadcast?.Invoke(this, EventArgs.Empty);
                 }
                 else
                 {
-                    if (commandCompletionSources.TryRemove(command.Sequence, out var tcs))
+                    if (commandCompletionSources.TryRemove(response.Sequence, out var tcs))
                     {
                         // TODO: outcome
-                        tcs.TrySetResult(true);
+                        tcs.TrySetResult(response);
                     }
                     else
                     {
@@ -53,20 +53,20 @@ namespace JBlam.NetflixScrape.Core
                     }
                 }
             }
-            catch (JsonException)
-            {
-                // TODO: design event args type
-                MessageError?.Invoke(this, EventArgs.Empty);
-            }
             catch (FormatException)
             {
                 MessageError?.Invoke(this, EventArgs.Empty);
             }
         }
-        
-        async Task<bool> ExecuteCommandAsync(Commando command)
+
+        public Task<Responseo> RequestState()
         {
-            var tcs = new TaskCompletionSource<bool>();
+            return ExecuteCommandAsync(commandBuilder.Create(CommandAction.State));
+        }
+        
+        async Task<Responseo> ExecuteCommandAsync(Commando command)
+        {
+            var tcs = new TaskCompletionSource<Responseo>();
             if (!commandCompletionSources.TryAdd(command.Sequence, tcs))
             {
                 throw new ArgumentException("Attempted to add a duplicate command");

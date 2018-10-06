@@ -1,4 +1,5 @@
 ﻿using JBlam.NetflixScrape.Core;
+using JBlam.NetflixScrape.Core.Models;
 using System;
 using System.Net.Http;
 using System.Net.WebSockets;
@@ -24,12 +25,22 @@ namespace DemoScrapeClient
                     {
                         while (true)
                         {
-                            var readLine = Console.ReadLine();
-                            if (string.IsNullOrEmpty(readLine))
+                            Console.WriteLine("[S]tate or [ESC] to quit");
+                            var key = Console.ReadKey(true);
+                            if (key.Key == ConsoleKey.Escape)
                             {
                                 Console.WriteLine("Quitting.");
                             }
-                            await c.ExecuteCommandAsync(readLine);
+                            if (key.Key == ConsoleKey.S)
+                            {
+                                Console.Write("Requesting state: ");
+                                var response = await c.RequestState();
+                                Console.WriteLine(response);
+                            }
+                            else
+                            {
+                                Console.WriteLine("Could not parse command. Try again or enter empty line to quit.");
+                            }
                         }
                     }
                     catch (TaskCanceledException)
