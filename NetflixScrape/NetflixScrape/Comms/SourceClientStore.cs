@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace JBlam.NetflixScrape.Server
+namespace JBlam.NetflixScrape.Server.Comms
 {
     public class SourceClientStore
     {
@@ -50,43 +50,11 @@ namespace JBlam.NetflixScrape.Server
             Console.WriteLine(e.Message);
         }
 
-        #region stuff to move out of here
-#warning This is all in the wrong spot
-        class Response
-        {
-            public static Response UnrecognisedCommandResponse(Commando command) => throw new NotImplementedException();
-            public static Response AcknowledgeCommandResponse(Commando command) => throw new NotImplementedException();
-            public Response(Commando command, object data)
-            {
-                throw new NotImplementedException();
-            }
-        }
-        class CommandProcessor
-        {
-            public async Task<Response> ProcessAsync(Commando c)
-            {
-                if (!IsRecognisedCommand(c)) { return Response.UnrecognisedCommandResponse(c); }
-                throw new NotImplementedException();
-            }
-            bool IsRecognisedCommand(Commando c) => throw new NotImplementedException();
-        }
-        #endregion
+        public event EventHandler<TicketCommandEventArgs> CommandReceived;
 
-        private async void Client_MessageReceived(object sender, TicketCommandEventArgs e)
+        private void Client_MessageReceived(object sender, TicketCommandEventArgs e)
         {
-            bool shouldPassOnToExtension = default(bool?) ?? throw new NotImplementedException();
-            if (shouldPassOnToExtension)
-            {
-                Task<object> extensionResponse = (Task<object>)null ?? throw new NotImplementedException("Send to extension");
-                var response = await extensionResponse;
-                await (sender as ClientTicket).SendIfRelevantAsync(response.Serialise());
-            }
-            else
-            {
-                throw new NotImplementedException("Decide what to do");
-                throw new NotImplementedException("Do that thing");
-                throw new NotImplementedException("Respond?");
-            }
+            CommandReceived?.Invoke(this, e);
         }
     }
     public class ClientTicket
@@ -101,15 +69,13 @@ namespace JBlam.NetflixScrape.Server
         public int Sequence { get; }
         async void RaiseMessageReceived(string message)
         {
-            try
+            if (Commando.TryParse(message, out var command))
             {
-                var incomingCommand = JsonConvert.DeserializeObject<Commando>(message);
-                MessageReceived?.Invoke(this, new TicketCommandEventArgs(incomingCommand));
+                MessageReceived?.Invoke(this, new TicketCommandEventArgs(command));
             }
-            catch (JsonException)
+            else
             {
-                string s = (string)null ?? throw new NotImplementedException("Define 'error' response type");
-                await messenger.SendAsync(s);
+                await messenger.SendAsync(Responseo.ParseError.ToString());
             }
         }
         public Task SendIfRelevantAsync(string message)

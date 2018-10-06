@@ -29,7 +29,7 @@ namespace JBlam.NetflixScrape.Server
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
-            services.AddSourceClientStore();
+            services.AddSocketCommandProcessor();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,7 +43,7 @@ namespace JBlam.NetflixScrape.Server
             app.UseStaticFiles();
             app.UseWebSockets();
             app.UseMvc();
-            app.UseSourceClientSockets();
+            app.UseSocketCommandProcessor();
         }
     }
 }

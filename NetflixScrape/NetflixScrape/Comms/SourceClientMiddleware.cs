@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace JBlam.NetflixScrape.Server
+namespace JBlam.NetflixScrape.Server.Comms
 {
     public class SourceClientMiddleware
     {
@@ -15,7 +15,7 @@ namespace JBlam.NetflixScrape.Server
             this.next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context, SourceClientStore clientManager, CommandProcessor commandProcessor)
+        public async Task InvokeAsync(HttpContext context, SourceClientStore clientManager)
         {
 
             var isSource = context.Request.Path == "/ws-source";
