@@ -9,7 +9,7 @@ namespace JBlam.NetflixScrape.Server.Platforms
 {
     class Win32HostCommandProcessor : HostCommandProcessor
     {
-        public static HostCommandProcessor TryCreate()
+        public new static HostCommandProcessor TryCreate()
         {
             try
             {

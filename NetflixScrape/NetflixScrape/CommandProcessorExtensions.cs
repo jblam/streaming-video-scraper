@@ -18,7 +18,7 @@ namespace JBlam.NetflixScrape.Server
         public static void AddSocketCommandProcessor(this IServiceCollection serviceCollection)
         {
             var sourceClientStore = new SourceClientStore();
-            var hostProcessor = FakeHostCommandProcessor.TryCreate();
+            var hostProcessor = HostCommandProcessor.TryCreate();
             var commandProcessor = new CommandProcessor(hostProcessor);
             sourceClientStore.CommandReceived += (sender, e) => commandProcessor.Process(e.Command);
             serviceCollection.AddSingleton(commandProcessor)
