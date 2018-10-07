@@ -156,8 +156,8 @@ namespace JBlam.NetflixScrape.Core.Models
                 this.sourceIdentifier = sourceIdentifier;
             }
             readonly int sourceIdentifier;
-            // First-returned sequence identifier should be 0.
-            int sequenceIdentifier = -1;
+            // First-returned sequence identifier should be 1.
+            int sequenceIdentifier = 0;
             int NextSequence() => Interlocked.Add(ref sequenceIdentifier, 1);
 
             public Commando Create(CommandAction action) => IsCompatible(GetParamaterness(action))

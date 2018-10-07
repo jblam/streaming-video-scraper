@@ -1,5 +1,4 @@
 ﻿using JBlam.NetflixScrape.Server.Comms;
-using JBlam.NetflixScrape.Server.Platforms;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -17,12 +16,10 @@ namespace JBlam.NetflixScrape.Server
         }
         public static void AddSocketCommandProcessor(this IServiceCollection serviceCollection)
         {
-            var sourceClientStore = new SourceClientStore();
             var hostProcessor = HostCommandProcessor.TryCreate();
             var commandProcessor = new CommandProcessor(hostProcessor);
-            sourceClientStore.CommandReceived += (sender, e) => commandProcessor.Process(e.Command);
-            serviceCollection.AddSingleton(commandProcessor)
-                .AddSingleton(sourceClientStore);
+            var sourceClientStore = new SourceClientStore(commandProcessor);
+            serviceCollection.AddSingleton(sourceClientStore);
         }
     }
 }

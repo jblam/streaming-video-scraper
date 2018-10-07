@@ -63,6 +63,12 @@ namespace JBlam.NetflixScrape.Core
         {
             return ExecuteCommandAsync(commandBuilder.Create(CommandAction.State));
         }
+        public async Task<Responseo> MoveAndClick()
+        {
+            var moveResponse = await ExecuteCommandAsync(commandBuilder.Create(CommandAction.MouseSet, 1832, 16));
+            if (moveResponse.DispatchResult != CommandDispatchResult.Ack) { return moveResponse; }
+            return await ExecuteCommandAsync(commandBuilder.Create(CommandAction.MouseClick, MouseButton.Left));
+        }
         
         async Task<Responseo> ExecuteCommandAsync(Commando command)
         {

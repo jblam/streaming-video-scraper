@@ -25,21 +25,24 @@ namespace DemoScrapeClient
                     {
                         while (true)
                         {
-                            Console.WriteLine("[S]tate or [ESC] to quit");
+                            Console.WriteLine("[S]tate; [M]ove; [ESC] to quit");
                             var key = Console.ReadKey(true);
-                            if (key.Key == ConsoleKey.Escape)
+                            switch (key.Key)
                             {
-                                Console.WriteLine("Quitting.");
-                            }
-                            if (key.Key == ConsoleKey.S)
-                            {
-                                Console.Write("Requesting state: ");
-                                var response = await c.RequestState();
-                                Console.WriteLine(response);
-                            }
-                            else
-                            {
-                                Console.WriteLine("Could not parse command. Try again or enter empty line to quit.");
+                                case ConsoleKey.Escape:
+                                    Console.WriteLine("Quitting.");
+                                    return;
+                                case ConsoleKey.M:
+                                    Console.WriteLine("Moving: ");
+                                    Console.WriteLine(await c.MoveAndClick());
+                                    break;
+                                case ConsoleKey.S:
+                                    Console.Write("Requesting state: ");
+                                    Console.WriteLine(await c.RequestState());
+                                    break;
+                                default:
+                                    Console.WriteLine("Could not parse command. Try again or enter empty line to quit.");
+                                    break;
                             }
                         }
                     }

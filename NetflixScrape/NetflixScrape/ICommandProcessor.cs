@@ -2,7 +2,7 @@
 
 namespace JBlam.NetflixScrape.Server
 {
-    interface ICommandProcessor
+    public interface ICommandProcessor
     {
         bool CanProcess(CommandAction action);
         // TODO: response typing?

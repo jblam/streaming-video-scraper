@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace JBlam.NetflixScrape.Server
 {
-    class CommandProcessor
+    public class CommandProcessor
     {
         public CommandProcessor(ICommandProcessor hostProcessor)
         {

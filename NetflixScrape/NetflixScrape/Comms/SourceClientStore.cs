@@ -11,6 +11,11 @@ namespace JBlam.NetflixScrape.Server.Comms
 {
     public class SourceClientStore
     {
+        public SourceClientStore(CommandProcessor commandProcessor)
+        {
+            this.commandProcessor = commandProcessor;
+        }
+
         WebsocketMessenger source;
         public WebsocketMessenger Source
         {
@@ -31,6 +36,7 @@ namespace JBlam.NetflixScrape.Server.Comms
         }
 
         readonly ClientRegister clientRegister = new ClientRegister();
+        readonly CommandProcessor commandProcessor;
 
         public async Task<ClientTicket> AddClient(WebsocketMessenger messenger)
         {
@@ -49,12 +55,11 @@ namespace JBlam.NetflixScrape.Server.Comms
             await Task.WhenAll(Clients.Select(c => c.SendIfRelevantAsync(e.Message)));
             Console.WriteLine(e.Message);
         }
-
-        public event EventHandler<TicketCommandEventArgs> CommandReceived;
-
-        private void Client_MessageReceived(object sender, TicketCommandEventArgs e)
+        
+        private async void Client_MessageReceived(object sender, TicketCommandEventArgs e)
         {
-            CommandReceived?.Invoke(this, e);
+            var response = commandProcessor.Process(e.Command);
+            await ((ClientTicket)sender).SendIfRelevantAsync(response);
         }
     }
     public class ClientTicket
@@ -76,6 +81,17 @@ namespace JBlam.NetflixScrape.Server.Comms
             else
             {
                 await messenger.SendAsync(Responseo.ParseError.ToString());
+            }
+        }
+        public Task SendIfRelevantAsync(Responseo response)
+        {
+            if (response.Source == Sequence)
+            {
+                return messenger.SendAsync(response.ToString());
+            }
+            else
+            {
+                return Task.CompletedTask;
             }
         }
         public Task SendIfRelevantAsync(string message)
