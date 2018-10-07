@@ -65,9 +65,14 @@ namespace JBlam.NetflixScrape.Core
         }
         public async Task<Responseo> MoveAndClick()
         {
+            // magic numbers: the window-minimise control for Visual Studio on the primary monitor
             var moveResponse = await ExecuteCommandAsync(commandBuilder.Create(CommandAction.MouseSet, 1832, 16));
             if (moveResponse.DispatchResult != CommandDispatchResult.Ack) { return moveResponse; }
             return await ExecuteCommandAsync(commandBuilder.Create(CommandAction.MouseClick, MouseButton.Left));
+        }
+        public Task<Responseo> MoveRelative(int x, int y)
+        {
+            return ExecuteCommandAsync(commandBuilder.Create(CommandAction.MouseMove, x, y));
         }
         
         async Task<Responseo> ExecuteCommandAsync(Commando command)

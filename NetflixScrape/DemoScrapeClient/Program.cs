@@ -32,6 +32,25 @@ namespace DemoScrapeClient
                                 case ConsoleKey.Escape:
                                     Console.WriteLine("Quitting.");
                                     return;
+                                case ConsoleKey.Z:
+                                    Console.Write("Wiggiling mouse until intterupted (any key) ");
+                                    async Task<Responseo> GetRandomMoveResult()
+                                    {
+                                        Responseo result = default(Responseo);
+                                        while (!Console.KeyAvailable)
+                                        {
+                                            var random = new Random();
+                                            result = await c.MoveRelative(random.Next(-5, 5), random.Next(-5, 5));
+                                            if (result.DispatchResult != CommandDispatchResult.Ack) break;
+                                        }
+                                        if (Console.KeyAvailable)
+                                        {
+                                            Console.ReadKey();
+                                        }
+                                        return result;
+                                    }
+                                    Console.WriteLine(await GetRandomMoveResult());
+                                    break;
                                 case ConsoleKey.M:
                                     Console.WriteLine("Moving: ");
                                     Console.WriteLine(await c.MoveAndClick());
