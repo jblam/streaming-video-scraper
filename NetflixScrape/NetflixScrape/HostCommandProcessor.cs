@@ -1,10 +1,17 @@
 ﻿using JBlam.NetflixScrape.Core.Models;
+using JBlam.NetflixScrape.Server.Platforms;
 using System;
 
 namespace JBlam.NetflixScrape.Server
 {
     abstract class HostCommandProcessor : ICommandProcessor
     {
+        public static HostCommandProcessor TryCreate()
+        {
+            return FakeHostCommandProcessor.TryCreate()
+                ?? Win32HostCommandProcessor.TryCreate();
+        }
+
         public abstract void MoveMouse(int x, int y);
         public abstract void SetMouse(int x, int y);
         public abstract void ClickMouse(MouseButton button);

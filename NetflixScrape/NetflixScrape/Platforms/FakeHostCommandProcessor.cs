@@ -9,7 +9,7 @@ namespace JBlam.NetflixScrape.Server.Platforms
 {
     class FakeHostCommandProcessor : HostCommandProcessor
     {
-        public static FakeHostCommandProcessor TryCreate()
+        public new static HostCommandProcessor TryCreate()
         {
             try
             {
