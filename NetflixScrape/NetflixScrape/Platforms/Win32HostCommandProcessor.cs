@@ -22,7 +22,7 @@ namespace JBlam.NetflixScrape.Server.Platforms
             }
         }
 
-        public override void ClickMouse(MouseButton button) => Console.WriteLine(NativeMethods.SendClick(button));
+        public override void ClickMouse(MouseButton button) => NativeMethods.Click(button);
 
         public override void MoveMouse(int x, int y)
         {
@@ -32,7 +32,7 @@ namespace JBlam.NetflixScrape.Server.Platforms
 
         public override void SetMouse(int x, int y) => Console.WriteLine(NativeMethods.SetCursorPos(x, y));
 
-        public override void WheelMouse(MouseWheelDirection direction, int amount) => Console.WriteLine(NativeMethods.SendWheelInput(direction, amount));
+        public override void WheelMouse(MouseWheelDirection direction, int amount) => NativeMethods.MouseWheel(direction, amount);
 
         static class NativeMethods
         {
@@ -50,110 +50,133 @@ namespace JBlam.NetflixScrape.Server.Platforms
             [DllImport("user32.dll", SetLastError = true)]
             static extern uint SendInput(uint nInputs, ref INPUT pInputs, int cbSize);
 
+            #region SendInput supporting types
             [StructLayout(LayoutKind.Sequential)]
             struct INPUT
             {
-                public SendInputEventType type;
-                public MouseKeybdhardwareInputUnion mkhi;
-            }
-            [StructLayout(LayoutKind.Explicit)]
-            struct MouseKeybdhardwareInputUnion
-            {
-                [FieldOffset(0)]
-                public MouseInputData mi;
 
-                [FieldOffset(0)]
-                public KEYBDINPUT ki;
+                enum SendInputEventType : int
+                {
+                    InputMouse,
+                    InputKeyboard,
+                    InputHardware
+                }
 
-                [FieldOffset(0)]
-                public HARDWAREINPUT hi;
+                readonly SendInputEventType type;
+                readonly InputDataUnion data;
+                [StructLayout(LayoutKind.Explicit)]
+                struct InputDataUnion
+                {
+                    [FieldOffset(0)]
+                    readonly MouseInputData mi;
+
+                    [FieldOffset(0)]
+                    readonly KEYBDINPUT ki;
+
+                    [FieldOffset(0)]
+                    readonly HARDWAREINPUT hi;
+
+                    public InputDataUnion(MouseInputData mouseData)
+                    {
+                        ki = default(KEYBDINPUT);
+                        hi = default(HARDWAREINPUT);
+                        mi = mouseData;
+                    }
+                }
+                public INPUT(MouseInputData mouseData)
+                {
+                    data = new InputDataUnion(mouseData);
+                    type = SendInputEventType.InputMouse;
+                }
             }
             [StructLayout(LayoutKind.Sequential)]
             struct KEYBDINPUT
             {
-                public ushort wVk;
-                public ushort wScan;
-                public uint dwFlags;
-                public uint time;
-                public IntPtr dwExtraInfo;
+                readonly ushort wVk;
+                readonly ushort wScan;
+                readonly uint dwFlags;
+                readonly uint time;
+                readonly IntPtr dwExtraInfo;
             }
             [StructLayout(LayoutKind.Sequential)]
             struct HARDWAREINPUT
             {
-                public int uMsg;
-                public short wParamL;
-                public short wParamH;
+                readonly int uMsg;
+                readonly short wParamL;
+                readonly short wParamH;
             }
             struct MouseInputData
             {
-                public int dx;
-                public int dy;
-                public int mouseData;
-                public MouseEventFlags dwFlags;
-                public uint time;
-                public IntPtr dwExtraInfo;
-            }
-            [Flags]
-            enum MouseEventFlags : uint
-            {
-                MOUSEEVENTF_MOVE = 0x0001,
-                MOUSEEVENTF_LEFTDOWN = 0x0002,
-                MOUSEEVENTF_LEFTUP = 0x0004,
-                MOUSEEVENTF_RIGHTDOWN = 0x0008,
-                MOUSEEVENTF_RIGHTUP = 0x0010,
-                MOUSEEVENTF_MIDDLEDOWN = 0x0020,
-                MOUSEEVENTF_MIDDLEUP = 0x0040,
-                MOUSEEVENTF_XDOWN = 0x0080,
-                MOUSEEVENTF_XUP = 0x0100,
-                MOUSEEVENTF_WHEEL = 0x0800,
-                MOUSEEVENTF_VIRTUALDESK = 0x4000,
-                MOUSEEVENTF_ABSOLUTE = 0x8000
-            }
-            enum SendInputEventType : int
-            {
-                InputMouse,
-                InputKeyboard,
-                InputHardware
-            }
+                [Flags]
+                enum MouseEventFlags : uint
+                {
+                    MOUSEEVENTF_MOVE = 0x0001,
+                    MOUSEEVENTF_LEFTDOWN = 0x0002,
+                    MOUSEEVENTF_LEFTUP = 0x0004,
+                    MOUSEEVENTF_RIGHTDOWN = 0x0008,
+                    MOUSEEVENTF_RIGHTUP = 0x0010,
+                    MOUSEEVENTF_MIDDLEDOWN = 0x0020,
+                    MOUSEEVENTF_MIDDLEUP = 0x0040,
+                    MOUSEEVENTF_XDOWN = 0x0080,
+                    MOUSEEVENTF_XUP = 0x0100,
+                    MOUSEEVENTF_WHEEL = 0x0800,
+                    MOUSEEVENTF_VIRTUALDESK = 0x4000,
+                    MOUSEEVENTF_ABSOLUTE = 0x8000
+                }
 
-            public static void ClickLeftMouseButton()
-            {
-                INPUT mouseDownInput = new INPUT();
-                mouseDownInput.type = SendInputEventType.InputMouse;
-                mouseDownInput.mkhi.mi.dwFlags = MouseEventFlags.MOUSEEVENTF_LEFTDOWN;
-                SendInput(1, ref mouseDownInput, Marshal.SizeOf(new INPUT()));
+                int dx;
+                int dy;
+                int mouseData;
+                MouseEventFlags dwFlags;
+                uint time;
+                IntPtr dwExtraInfo;
 
-                INPUT mouseUpInput = new INPUT();
-                mouseUpInput.type = SendInputEventType.InputMouse;
-                mouseUpInput.mkhi.mi.dwFlags = MouseEventFlags.MOUSEEVENTF_LEFTUP;
-                SendInput(1, ref mouseUpInput, Marshal.SizeOf(new INPUT()));
+                public static IEnumerable<MouseInputData> GetClickData(MouseButton button)
+                {
+                    IEnumerable<MouseEventFlags> GetClickFlags(MouseButton b)
+                    {
+                        switch (b)
+                        {
+                            case MouseButton.Left:
+                                yield return MouseEventFlags.MOUSEEVENTF_LEFTDOWN;
+                                yield return MouseEventFlags.MOUSEEVENTF_LEFTUP;
+                                yield break;
+                            case MouseButton.Right:
+                                yield return MouseEventFlags.MOUSEEVENTF_RIGHTDOWN;
+                                yield return MouseEventFlags.MOUSEEVENTF_RIGHTUP;
+                                yield break;
+                            default:
+                                break;
+                        }
+                    }
+                    return GetClickFlags(button).Select(f => new MouseInputData { dwFlags = f });
+                }
+
+                public static MouseInputData GetWheelData(MouseWheelDirection direction, int amount)
+                {
+                    return new MouseInputData
+                    {
+                        dwFlags = MouseEventFlags.MOUSEEVENTF_WHEEL,
+                        mouseData = (direction == MouseWheelDirection.WheelUp ? amount : -amount) * 120
+                    };
+                }
             }
-            public static void ClickRightMouseButton()
-            {
-                INPUT mouseDownInput = new INPUT();
-                mouseDownInput.type = SendInputEventType.InputMouse;
-                mouseDownInput.mkhi.mi.dwFlags = MouseEventFlags.MOUSEEVENTF_RIGHTDOWN;
-                SendInput(1, ref mouseDownInput, Marshal.SizeOf(new INPUT()));
+            #endregion
 
-                INPUT mouseUpInput = new INPUT();
-                mouseUpInput.type = SendInputEventType.InputMouse;
-                mouseUpInput.mkhi.mi.dwFlags = MouseEventFlags.MOUSEEVENTF_RIGHTUP;
-                SendInput(1, ref mouseUpInput, Marshal.SizeOf(new INPUT()));
+            public static void Click(MouseButton button)
+            {
+                foreach (var mouse in MouseInputData.GetClickData(button))
+                {
+                    var input = new INPUT(mouse);
+                    SendInput(1, ref input, Marshal.SizeOf<INPUT>());
+                }
             }
 
             public static void MouseWheel(MouseWheelDirection direction, int amount)
             {
-                INPUT wheelInput = new INPUT()
-                {
-                    type = SendInputEventType.InputMouse
-                };
-                wheelInput.mkhi.mi.dwFlags = MouseEventFlags.MOUSEEVENTF_WHEEL;
-                wheelInput.mkhi.mi.mouseData = (direction == MouseWheelDirection.WheelUp ? amount : -amount) * 120;
+                var wheelInput = new INPUT(MouseInputData.GetWheelData(direction, amount));
                 SendInput(1, ref wheelInput, Marshal.SizeOf<INPUT>());
             }
-
-            [DllImport("user32.dll")]
-            static extern uint SendInput(uint nInputs, [MarshalAs(UnmanagedType.LPArray), In] ref INPUT[] pInputs, int cbSize);
         }
     }
 }
