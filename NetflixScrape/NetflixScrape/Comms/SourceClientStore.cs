@@ -47,12 +47,10 @@ namespace JBlam.NetflixScrape.Server.Comms
         }
         public void Deregister(ClientTicket ticket) => clientRegister.Deregister(ticket);
 
-        IReadOnlyCollection<ClientTicket> Clients => throw new NotImplementedException("Somehow enumerate all the clients in the dictionary without throwing if collection mutated");
-
         private async void Source_MessageReceived(object sender, WebsocketReceiveEventArgs e)
         {
             // check the (client, sequence) -> TCS and fulfills 
-            await Task.WhenAll(Clients.Select(c => c.SendIfRelevantAsync(e.Message)));
+            await Task.WhenAll(clientRegister.Enumerate().Select(c => c.SendIfRelevantAsync(e.Message)));
             Console.WriteLine(e.Message);
         }
         
@@ -96,7 +94,6 @@ namespace JBlam.NetflixScrape.Server.Comms
         }
         public Task SendIfRelevantAsync(string message)
         {
-            throw new NotImplementedException("Is this string relevant? Do I need to JSON-parse first?");
             return messenger.SendAsync(message);
         }
         public Task EndTask => messenger.ReceiveTask;

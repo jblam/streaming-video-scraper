@@ -86,6 +86,20 @@ namespace JBlam.NetflixScrape.Core
         /// <returns>The sequence identifier member of the ticket</returns>
         protected abstract int RetrieveSequence(TTicket ticket);
 
+        /// <summary>
+        /// Enumerates a snapshot of the currently-registered tickets
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<TTicket> Enumerate()
+        {
+            var keysSnapshot = new List<int>(inner.Keys);
+            foreach (var key in keysSnapshot)
+            {
+                if (inner.TryGetValue(key, out var ticket))
+                    yield return ticket;
+            }
+        }
+
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
         private bool isDisposed = false;
