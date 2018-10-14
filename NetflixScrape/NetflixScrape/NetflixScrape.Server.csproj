@@ -2,18 +2,28 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <TypeScriptToolsVersion>2.5</TypeScriptToolsVersion>
+    <TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
     <AssemblyName>NetflixScrape.Server</AssemblyName>
     <RootNamespace>JBlam.NetflixScrape.Server</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="wwwroot\js\socket.ts" />
+    <Content Remove="wwwroot\js\testHostWindow.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Extension\background-script.ts" />
+    <None Remove="Extension\content-script.ts" />
+    <None Remove="Extension\extensionComms.ts" />
+    <None Remove="Extension\models.d.ts" />
+    <None Remove="Extension\util.ts" />
+    <None Remove="Extension\webextensions.d.ts" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.WebSockets" Version="2.0.2" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.0.4" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,7 +35,31 @@
   </ItemGroup>
 
   <ItemGroup>
-    <TypeScriptCompile Include="wwwroot\js\socket.ts" />
+    <TypeScriptCompile Include="Extension\background-script.ts" />
+    <TypeScriptCompile Include="Extension\extensionComms.ts" />
+    <TypeScriptCompile Include="Extension\content-script.ts" />
+    <TypeScriptCompile Include="Extension\models.d.ts" />
+    <TypeScriptCompile Include="Extension\util.ts" />
+    <TypeScriptCompile Include="Extension\webextensions.d.ts" />
+    <TypeScriptCompile Include="wwwroot\js\testHostWindow.ts" />
   </ItemGroup>
+
+  <ProjectExtensions><VisualStudio><UserProperties Extension_4manifest_1json__JSONSchema="http://json.schemastore.org/webextension" /></VisualStudio></ProjectExtensions>
+
+  <PropertyGroup>
+    <TypeScriptTarget>ES2015</TypeScriptTarget>
+    <TypeScriptJSXEmit>None</TypeScriptJSXEmit>
+    <TypeScriptModuleKind>ES6</TypeScriptModuleKind>
+    <TypeScriptCompileOnSaveEnabled>True</TypeScriptCompileOnSaveEnabled>
+    <TypeScriptNoImplicitAny>True</TypeScriptNoImplicitAny>
+    <TypeScriptRemoveComments>False</TypeScriptRemoveComments>
+    <TypeScriptOutFile />
+    <TypeScriptOutDir />
+    <TypeScriptGeneratesDeclarations>False</TypeScriptGeneratesDeclarations>
+    <TypeScriptNoEmitOnError>True</TypeScriptNoEmitOnError>
+    <TypeScriptSourceMap>True</TypeScriptSourceMap>
+    <TypeScriptMapRoot />
+    <TypeScriptSourceRoot />
+  </PropertyGroup>
 
 </Project>

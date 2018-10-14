@@ -1,4 +1,5 @@
 ﻿using JBlam.NetflixScrape.Core;
+using JBlam.NetflixScrape.Core.Models;
 using System;
 using System.Net.Http;
 using System.Net.WebSockets;
@@ -16,18 +17,60 @@ namespace DemoScrapeClient
             var portEntry = Console.ReadLine();
             if (int.TryParse(portEntry, out var port))
             {
-                using (var socket = new ClientWebSocket())
+                using (var c = await Client.ConnectNewAsync(new Uri($"ws://localhost:{port}/ws")))
                 {
-                    await socket.ConnectAsync(new Uri($"ws://localhost:{port}/ws"), CancellationToken.None);
-                    using (var messenger = new WebsocketMessenger(socket))
+                    c.Broadcast += (sender, e) => Console.WriteLine("New broadcast: {0}", e);
+                    c.MessageError += (sender, e) => Console.WriteLine("Say what now?! {0}", e);
+                    try
                     {
-                        messenger.MessageReceived += Messenger_MessageReceived;
-
-                        string nextLine;
-                        while (!String.IsNullOrEmpty(nextLine = Console.ReadLine()))
+                        while (true)
                         {
-                            await messenger.SendAsync(nextLine);
+                            Console.WriteLine("[S]tate; [M]ove; [ESC] to quit");
+                            var key = Console.ReadKey(true);
+                            switch (key.Key)
+                            {
+                                case ConsoleKey.Escape:
+                                    Console.WriteLine("Quitting.");
+                                    return;
+                                case ConsoleKey.Z:
+                                    Console.Write("Wiggiling mouse until intterupted (any key) ");
+                                    async Task<Responseo> GetRandomMoveResult()
+                                    {
+                                        Responseo result = default(Responseo);
+                                        while (!Console.KeyAvailable)
+                                        {
+                                            var random = new Random();
+                                            result = await c.MoveRelative(random.Next(-5, 5), random.Next(-5, 5));
+                                            if (result.DispatchResult != CommandDispatchResult.Ack) break;
+                                        }
+                                        if (Console.KeyAvailable)
+                                        {
+                                            Console.ReadKey();
+                                        }
+                                        return result;
+                                    }
+                                    Console.WriteLine(await GetRandomMoveResult());
+                                    break;
+                                case ConsoleKey.M:
+                                    Console.WriteLine("Moving: ");
+                                    Console.WriteLine(await c.MoveAndClick());
+                                    break;
+                                case ConsoleKey.S:
+                                    Console.Write("Requesting state: ");
+                                    Console.WriteLine(await c.RequestState());
+                                    break;
+                                default:
+                                    Console.WriteLine("Could not parse command. Try again or enter empty line to quit.");
+                                    break;
+                            }
                         }
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // the task will be cancelled if the server gets closed while waiting on the task
+                        // in this case, we can just re-enter the loop.
+                        Console.WriteLine("Remote server closed connection. Goodbye.");
+                        return;
                     }
                 }
             }
@@ -35,12 +78,6 @@ namespace DemoScrapeClient
             {
                 Console.WriteLine($"{portEntry} is not an integer. Better luck next time");
             }
-            ;
-        }
-
-        private static void Messenger_MessageReceived(object sender, WebsocketReceiveEventArgs e)
-        {
-            Console.WriteLine("Received: {0}", e.Message);
         }
     }
 }

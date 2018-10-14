@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -6,8 +8,15 @@ using System.Threading.Tasks;
 
 namespace JBlam.NetflixScrape.Core
 {
+    /// <summary>
+    /// Wraps a websocket connection to provide an async-send and event-receive API
+    /// </summary>
     public class WebsocketMessenger : IDisposable
     {
+        /// <summary>
+        /// Creates an instance of <see cref="WebsocketMessenger"/> around a socket instance
+        /// </summary>
+        /// <param name="socket">The socket to wrap</param>
         public WebsocketMessenger(WebSocket socket)
         {
             if (socket == null) { throw new ArgumentNullException(nameof(socket)); }
@@ -22,6 +31,9 @@ namespace JBlam.NetflixScrape.Core
             }
         }
 
+        /// <summary>
+        /// Gets a task which resolves when the socket closes
+        /// </summary>
         public Task ReceiveTask { get; }
         CancellationTokenSource tokenSource = new CancellationTokenSource();
         readonly WebSocket socket;
@@ -29,6 +41,11 @@ namespace JBlam.NetflixScrape.Core
         readonly byte[] sendBuffer = new byte[1024];
         readonly byte[] receiveBuffer = new byte[1024];
 
+        /// <summary>
+        /// Asynchronously sends a message through the socket
+        /// </summary>
+        /// <param name="message">The message to send</param>
+        /// <returns>A task which resolves when the message has been sent</returns>
         public async Task SendAsync(string message)
         {
             if (IsDisposed) { throw new ObjectDisposedException(nameof(WebsocketMessenger)); }
@@ -43,7 +60,7 @@ namespace JBlam.NetflixScrape.Core
             {
                 var nextMessage = await socket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), tokenSource.Token);
                 var messageEventArgs = new WebsocketReceiveEventArgs(encoding.GetString(receiveBuffer, 0, nextMessage.Count));
-                MessageReceived?.Invoke(this, messageEventArgs);
+                messageEventSource.SendOrBuffer(this, messageEventArgs);
                 if (nextMessage.CloseStatus.HasValue)
                 {
                     tokenSource.Cancel();
@@ -51,10 +68,22 @@ namespace JBlam.NetflixScrape.Core
             }
         }
 
-        public event EventHandler<WebsocketReceiveEventArgs> MessageReceived;
+        readonly BufferedEventSource<WebsocketReceiveEventArgs> messageEventSource = new BufferedEventSource<WebsocketReceiveEventArgs>();
+        /// <summary>
+        /// Event raised when the messager receives a message
+        /// </summary>
+        public event EventHandler<WebsocketReceiveEventArgs> MessageReceived
+        {
+            add => messageEventSource.Event += value;
+            remove => messageEventSource.Event -= value;
+        }
 
+        /// <summary>
+        /// Asynchronously wait for any outgoing messages, then disposes the messanger and the underlying socket
+        /// </summary>
+        /// <returns></returns>
         public Task FinishAsync() => Dispose(WebSocketCloseStatus.NormalClosure, string.Empty);
-        async void IDisposable.Dispose() => await Dispose(WebSocketCloseStatus.Empty, "Disposing");
+        async void IDisposable.Dispose() => await Dispose(WebSocketCloseStatus.Empty, null);
         async Task Dispose(WebSocketCloseStatus closeStatus, string reason)
         {
             tokenSource.Cancel();
@@ -64,6 +93,9 @@ namespace JBlam.NetflixScrape.Core
                 socket.Dispose();
             }
         }
+        /// <summary>
+        /// Gets a value indicating if the messanger is disposed
+        /// </summary>
         public bool IsDisposed => tokenSource.IsCancellationRequested;
     }
 }
